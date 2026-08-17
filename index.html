@@ -223,15 +223,15 @@
                 }
             }
 
-            // QR code (semi-large, bottom right area)
+            // QR code (large, centered below carousel)
             if (qrImg && qrImg.complete) {
-                const qrSize = 220
-                const qrX = canvas.width - qrSize - 40
-                const qrY = canvas.height - qrSize - 60
+                const qrSize = 300
+                const qrX = cx - qrSize / 2
+                const qrY = canvas.height - qrSize - 80
                 ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize)
                 ctx.fillStyle = "#64748b"
-                ctx.font = "18px system-ui"
-                ctx.fillText("Scan to join", qrX + qrSize / 2, qrY + qrSize + 25)
+                ctx.font = "20px system-ui"
+                ctx.fillText("Scan to join", cx, qrY + qrSize + 30)
             }
 
             // Status
