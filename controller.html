@@ -90,8 +90,8 @@
           if (t.identifier === selectTouch) {
             const dx = t.clientX - selectStartX
             if (Math.abs(dx) > 40) {
-              // Swipe
-              if (dx > 0) selectedIndex = (selectedIndex + 1) % characters.length
+              // Swipe — left to go forward, right to go back
+              if (dx < 0) selectedIndex = (selectedIndex + 1) % characters.length
               else selectedIndex = (selectedIndex - 1 + characters.length) % characters.length
               sendSelectMsg({ type: "browse", char: characters[selectedIndex] })
             } else {
@@ -259,28 +259,11 @@
         ctx.drawImage(img, cx - imgSize / 2, cy - imgSize / 2, imgSize, imgSize)
       }
 
-      // Arrows
-      ctx.fillStyle = "#3b82f6"
-      ctx.font = `bold ${h * 0.1}px system-ui`
-      ctx.fillText("‹", w * 0.08, cy)
-      ctx.fillText("›", w * 0.92, cy)
-
       // Instructions
       ctx.fillStyle = locked ? "#22c55e" : "#9ca3af"
       ctx.font = `${h * 0.04}px system-ui`
-      const msg = locked ? "✓ LOCKED IN" : "Swipe to browse • Tap to lock in"
+      const msg = locked ? "✓ LOCKED IN" : "swipe to swap • tap to select"
       ctx.fillText(msg, cx, h * 0.88)
-
-      // Index dots
-      const dotR = 6
-      const dotSpacing = 20
-      const dotsX = cx - ((characters.length - 1) * dotSpacing) / 2
-      for (let i = 0; i < characters.length; i++) {
-        ctx.beginPath()
-        ctx.arc(dotsX + i * dotSpacing, h * 0.78, dotR, 0, Math.PI * 2)
-        ctx.fillStyle = i === selectedIndex ? "#3b82f6" : "#334155"
-        ctx.fill()
-      }
     }
 
     function drawGameControls(now) {
