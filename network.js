@@ -190,7 +190,7 @@ function transitionTo(phase) {
 }
 
 function checkAllLocked() {
-  if (connectedPeers.length < 1) return
+  if (connectedPeers.length < 2) return
   if (connectedPeers.every(p => p.locked)) {
     startGame()
   }
