@@ -148,74 +148,99 @@
 
         function drawSelect() {
             const cx = canvas.width / 2
+            const cy = canvas.height / 2
 
+            // Title
             ctx.fillStyle = "white"
             ctx.font = "bold 60px system-ui"
             ctx.textAlign = "center"
-            ctx.fillText("SELECT YOUR CHARACTER", cx, 80)
+            ctx.fillText("SELECT CHARACTER", cx, 70)
 
-            // Draw character roster
+            // Single character carousel - show all in a row
             const chars = character_names_list
-            const cols = chars.length
-            const cellW = 220
-            const cellH = 260
-            const startX = cx - (cols * cellW) / 2
-            const startY = 150
+            const cellW = 200
+            const cellH = 240
+            const totalW = chars.length * cellW
+            const startX = cx - totalW / 2
+            const startY = 120
 
             for (let i = 0; i < chars.length; i++) {
                 const x = startX + i * cellW
                 const y = startY
 
-                // Highlight if any player is browsing/locked on this
-                let selectedBy = []
-                for (const peer of connectedPeers) {
-                    if (peer.selectedChar === chars[i]) {
-                        selectedBy.push(peer)
-                    }
-                }
-
                 // Cell background
-                ctx.fillStyle = selectedBy.length > 0 ? "#1e293b" : "#0f172a"
-                ctx.strokeStyle = selectedBy.some(p => p.locked) ? "#22c55e" : selectedBy.length > 0 ? "#3b82f6" : "#293244"
-                ctx.lineWidth = selectedBy.some(p => p.locked) ? 4 : 2
+                ctx.fillStyle = "#0f172a"
+                ctx.strokeStyle = "#293244"
+                ctx.lineWidth = 2
                 ctx.beginPath()
-                ctx.roundRect(x + 10, y, cellW - 20, cellH, 12)
+                ctx.roundRect(x + 8, y, cellW - 16, cellH, 10)
                 ctx.fill()
                 ctx.stroke()
 
                 // Character image
                 const img = charImages[chars[i]]
                 if (img && img.complete) {
-                    ctx.drawImage(img, x + 35, y + 20, cellW - 70, cellH - 80)
+                    ctx.drawImage(img, x + 30, y + 15, cellW - 60, cellH - 70)
                 }
 
                 // Name
-                ctx.fillStyle = "white"
-                ctx.font = "bold 20px system-ui"
-                ctx.fillText(chars[i].toUpperCase(), x + cellW / 2, y + cellH - 20)
+                ctx.fillStyle = "#9ca3af"
+                ctx.font = "18px system-ui"
+                ctx.fillText(chars[i].toUpperCase(), x + cellW / 2, y + cellH - 15)
+
+                // Player cursors on this character
+                let playersHere = []
+                for (let p = 0; p < connectedPeers.length; p++) {
+                    if (connectedPeers[p].selectedChar === chars[i]) {
+                        playersHere.push(p)
+                    }
+                }
+
+                if (playersHere.length > 0) {
+                    const cursorY = y + cellH + 20
+                    const colors = ["#3b82f6", "#ef4444", "#22c55e", "#eab308"]
+                    for (let pi = 0; pi < playersHere.length; pi++) {
+                        const p = playersHere[pi]
+                        const locked = connectedPeers[p].locked
+                        const color = colors[p % colors.length]
+                        const offsetX = (pi - (playersHere.length - 1) / 2) * 50
+
+                        // Cursor triangle
+                        const triX = x + cellW / 2 + offsetX
+                        ctx.beginPath()
+                        ctx.moveTo(triX, cursorY - 15)
+                        ctx.lineTo(triX - 12, cursorY)
+                        ctx.lineTo(triX + 12, cursorY)
+                        ctx.closePath()
+                        ctx.fillStyle = color
+                        ctx.fill()
+
+                        // Label
+                        ctx.font = locked ? "bold 20px system-ui" : "20px system-ui"
+                        ctx.fillStyle = color
+                        ctx.fillText(locked ? `P${p + 1} ✓` : `P${p + 1}`, triX, cursorY + 22)
+                    }
+                }
             }
 
-            // Player status
-            const statusY = startY + cellH + 60
-            ctx.font = "28px system-ui"
-            for (let i = 0; i < connectedPeers.length; i++) {
-                const peer = connectedPeers[i]
-                const label = peer.locked ? "✓ LOCKED" : "choosing..."
-                const color = peer.locked ? "#22c55e" : "#9ca3af"
-                ctx.fillStyle = color
-                ctx.fillText(
-                    `P${i + 1}: ${peer.selectedChar.toUpperCase()} ${label}`,
-                    cx, statusY + i * 40
-                )
-            }
-
-            // QR still visible (smaller, corner)
+            // QR code (semi-large, bottom right area)
             if (qrImg && qrImg.complete) {
-                ctx.drawImage(qrImg, canvas.width - 170, canvas.height - 170, 150, 150)
+                const qrSize = 220
+                const qrX = canvas.width - qrSize - 40
+                const qrY = canvas.height - qrSize - 60
+                ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize)
                 ctx.fillStyle = "#64748b"
-                ctx.font = "14px system-ui"
-                ctx.fillText("Scan to join", canvas.width - 95, canvas.height - 12)
+                ctx.font = "18px system-ui"
+                ctx.fillText("Scan to join", qrX + qrSize / 2, qrY + qrSize + 25)
             }
+
+            // Status
+            ctx.fillStyle = "#64748b"
+            ctx.font = "24px system-ui"
+            ctx.textAlign = "center"
+            const allLocked = connectedPeers.length > 0 && connectedPeers.every(p => p.locked)
+            const statusText = allLocked ? "Starting..." : `${connectedPeers.length} player(s) — waiting for locks`
+            ctx.fillText(statusText, cx, canvas.height - 30)
         }
 
         function drawGameover() {
