@@ -120,26 +120,16 @@
             // QR code
             if (qrImg && qrImg.complete) {
                 const qrSize = 300
-                ctx.drawImage(qrImg, cx - qrSize / 2, cy - qrSize / 2 - 30, qrSize, qrSize)
+                ctx.drawImage(qrImg, cx - qrSize / 2, cy - qrSize / 2, qrSize, qrSize)
             }
 
             // "Scan to start"
             ctx.fillStyle = "#9ca3af"
             ctx.font = "36px system-ui"
-            ctx.fillText("Scan to start", cx, cy + 200)
-
-            // Connected players
-            ctx.font = "30px system-ui"
-            ctx.fillStyle = "#22c55e"
-            ctx.fillText(`${connectedPeers.length} player(s) connected`, cx, cy + 260)
+            ctx.fillText("Scan to start", cx, cy + qrSize / 2 + 40)
 
             // Auto-advance to select when players connected
             if (connectedPeers.length > 0) {
-                ctx.fillStyle = "#64748b"
-                ctx.font = "24px system-ui"
-                ctx.fillText("Waiting for more players... Game starts from character select", cx, cy + 320)
-
-                // Transition after a short delay so peers can receive charlist
                 if (!lobbyTimer) {
                     lobbyTimer = setTimeout(() => { startSelectPhase() }, 1500)
                 }
@@ -223,11 +213,11 @@
                 }
             }
 
-            // QR code (large, centered below carousel)
+            // QR code (same size, centered, below carousel and cursors)
             if (qrImg && qrImg.complete) {
                 const qrSize = 300
+                const qrY = startY + cellH + 80
                 const qrX = cx - qrSize / 2
-                const qrY = canvas.height - qrSize - 80
                 ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize)
                 ctx.fillStyle = "#64748b"
                 ctx.font = "20px system-ui"
@@ -235,11 +225,11 @@
             }
 
             // Status
-            ctx.fillStyle = "#64748b"
-            ctx.font = "24px system-ui"
+            ctx.fillStyle = "#22c55e"
+            ctx.font = "28px system-ui"
             ctx.textAlign = "center"
             const allLocked = connectedPeers.length > 0 && connectedPeers.every(p => p.locked)
-            const statusText = allLocked ? "Starting..." : `${connectedPeers.length} player(s) — waiting for locks`
+            const statusText = allLocked && connectedPeers.length >= 2 ? "Starting..." : `${connectedPeers.length} player(s) connected`
             ctx.fillText(statusText, cx, canvas.height - 30)
         }
 
