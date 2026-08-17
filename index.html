@@ -118,8 +118,8 @@
             ctx.fillText("SUPER MASH BRUDDAS", cx, 120)
 
             // QR code
+            const qrSize = 300
             if (qrImg && qrImg.complete) {
-                const qrSize = 300
                 ctx.drawImage(qrImg, cx - qrSize / 2, cy - qrSize / 2, qrSize, qrSize)
             }
 
