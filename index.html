@@ -68,6 +68,7 @@
         }
 
         let qrImg = null
+        let lobbyTimer = null
 
         window.addEventListener('load', async () => {
             const roomName = await initNetwork()
@@ -138,9 +139,9 @@
                 ctx.font = "24px system-ui"
                 ctx.fillText("Waiting for more players... Game starts from character select", cx, cy + 320)
 
-                // Show "start" hint — auto go to select after 2+ players or any player
-                if (connectedPeers.length >= 1) {
-                    startSelectPhase()
+                // Transition after a short delay so peers can receive charlist
+                if (!lobbyTimer) {
+                    lobbyTimer = setTimeout(() => { startSelectPhase() }, 1500)
                 }
             }
         }

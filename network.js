@@ -158,9 +158,11 @@ async function initNetwork() {
     networkControls.set(peerId, ctrl)
     connectedPeers.push({ peerId, selectedChar: character_names_list[0], locked: false })
 
-    // Send current phase and character list to new peer
-    sendPhase({ phase: gamePhase }, peerId)
-    sendCharList({ characters: character_names_list }, peerId)
+    // Send current phase and character list to new peer (slight delay for connection stability)
+    setTimeout(() => {
+      sendPhase({ phase: gamePhase }, peerId)
+      sendCharList({ characters: character_names_list }, peerId)
+    }, 500)
   })
 
   room.onPeerLeave(peerId => {
