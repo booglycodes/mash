@@ -133,7 +133,6 @@ async function initNetwork() {
   _receiveCharList(() => {})
 
   receiveInput((data, peerId) => {
-    if (gamePhase !== PHASE_PLAYING) return
     const ctrl = networkControls.get(peerId)
     if (ctrl) ctrl.updateInput(data)
   })
@@ -197,6 +196,13 @@ function checkAllLocked() {
 }
 
 function startGame() {
+  // Reset all control state so nothing is stuck from previous round
+  for (const ctrl of networkControls.values()) {
+    ctrl._axes = new Vector2(0, 0)
+    ctrl._jump = false
+    ctrl._rawButtons = [false, false, false, false, false]
+  }
+
   // Assign characters to controls
   for (const peer of connectedPeers) {
     const ctrl = networkControls.get(peer.peerId)

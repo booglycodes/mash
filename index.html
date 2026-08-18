@@ -68,7 +68,74 @@
         }
 
         let qrImg = null
-        let lobbyTimer = null
+
+        // === BOUNCING CHARACTERS FOR LOBBY ===
+        const lobbyCharSize = 120
+        let lobbyInitialized = false
+
+        function initLobby() {
+            if (lobbyInitialized) return
+            lobbyInitialized = true
+
+            all_objects = []
+
+            // Walls using platform() — same as game maps
+            const wallThickness = 50
+            all_objects.push(platform(canvas.width, wallThickness, new Vector2(canvas.width / 2, -wallThickness / 2)))
+            all_objects.push(platform(canvas.width, wallThickness, new Vector2(canvas.width / 2, canvas.height + wallThickness / 2)))
+            all_objects.push(platform(wallThickness, canvas.height, new Vector2(-wallThickness / 2, canvas.height / 2)))
+            all_objects.push(platform(wallThickness, canvas.height, new Vector2(canvas.width + wallThickness / 2, canvas.height / 2)))
+
+            // QR code as solid platform
+            const qr = getQrRect()
+            all_objects.push(platform(qr.w, qr.h, new Vector2(qr.x + qr.w / 2, qr.y + qr.h / 2)))
+
+            // Pick 5 random characters
+            const allChars = [
+                { name: 'trump', img: charImages.trump },
+                { name: 'stoner', img: charImages.stoner },
+                { name: 'faceman', img: charImages.faceman },
+                { name: 'knigh', img: charImages.knigh },
+                { name: 'utopian', img: charImages.utopian },
+                { name: 'shrek', img: charImages.shrek },
+                { name: 'monke', img: charImages.monke }
+            ]
+            const shuffled = allChars.sort(() => Math.random() - 0.5)
+            const picked = shuffled.slice(0, 5)
+
+            for (const char of picked) {
+                const speed = 3 + Math.random() * 4
+                const angle = Math.random() * Math.PI * 2
+                const x = 200 + Math.random() * (canvas.width - 400)
+                const y = 200 + Math.random() * (canvas.height - 400)
+
+                const imgComp = new ImageComponent(char.img, new Vector2(0, 0), false)
+                const obj = new GameObject(
+                    new Vector2(x, y),
+                    new PhysicalProperties(
+                        new Vector2(Math.cos(angle) * speed, Math.sin(angle) * speed),
+                        10, 0,
+                        new Vector2(lobbyCharSize, lobbyCharSize),
+                        1, false
+                    ),
+                    ["bouncer"],
+                    { display: imgComp }
+                )
+                all_objects.push(obj)
+            }
+        }
+
+        function getQrRect() {
+            const qrSize = 350
+            const cx = canvas.width / 2
+            const cy = canvas.height / 2
+            return {
+                x: cx - qrSize / 2,
+                y: cy - qrSize / 2,
+                w: qrSize,
+                h: qrSize
+            }
+        }
 
         window.addEventListener('load', async () => {
             const roomName = await initNetwork()
@@ -111,28 +178,36 @@
             const cx = canvas.width / 2
             const cy = canvas.height / 2
 
-            // Title
+            // Initialize lobby objects on first frame
+            initLobby()
+
+            // Run physics + draw all objects (same as gameloop)
+            handle_collisions()
+            for (const obj of all_objects) {
+                Object.values(obj.components).forEach(c => { if (c.draw) c.draw() })
+            }
+            handle_position_update()
+
+            // Draw QR and title on top
+            const qr = getQrRect()
+            ctx.fillStyle = "#ffffff"
+            ctx.fillRect(qr.x, qr.y, qr.w, qr.h)
+            if (qrImg && qrImg.complete) {
+                ctx.drawImage(qrImg, qr.x, qr.y, qr.w, qr.h)
+            }
+
             ctx.fillStyle = "white"
             ctx.font = "bold 80px system-ui"
             ctx.textAlign = "center"
             ctx.fillText("SUPER MASH BRUDDAS", cx, 120)
 
-            // QR code
-            const qrSize = 300
-            if (qrImg && qrImg.complete) {
-                ctx.drawImage(qrImg, cx - qrSize / 2, cy - qrSize / 2, qrSize, qrSize)
-            }
-
-            // "Scan to start"
             ctx.fillStyle = "#9ca3af"
             ctx.font = "36px system-ui"
-            ctx.fillText("Scan to start", cx, cy + qrSize / 2 + 40)
+            ctx.fillText("Scan to join", cx, qr.y + qr.h + 50)
 
             // Auto-advance to select when players connected
             if (connectedPeers.length > 0) {
-                if (!lobbyTimer) {
-                    lobbyTimer = setTimeout(() => { startSelectPhase() }, 1500)
-                }
+                startSelectPhase()
             }
         }
 
