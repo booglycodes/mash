@@ -207,8 +207,10 @@ function handle_collisions() {
                     }
                     // Only resolve velocities on the first pass to avoid double-bouncing
                     if (pass === 0) {
-                        set_member(obj1, get_coll(obj1, obj2, get_member))
-                        set_member(obj2, get_coll(obj2, obj1, get_member))
+                        let new_v1 = get_coll(obj1, obj2, get_member)
+                        let new_v2 = get_coll(obj2, obj1, get_member)
+                        set_member(obj1, new_v1)
+                        set_member(obj2, new_v2)
                     }
                 }
 
