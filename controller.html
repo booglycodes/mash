@@ -270,37 +270,71 @@
 
     function drawSelectScreen() {
       const w = canvas.width, h = canvas.height
-      const cx = w / 2, cy = h * 0.45
+      const cx = w / 2, cy = h * 0.48
 
-      // Character name
       const charName = characters[selectedIndex] || "???"
-      ctx.fillStyle = "white"
-      ctx.font = `bold ${h * 0.08}px system-ui`
-      ctx.textAlign = "center"
-      ctx.textBaseline = "middle"
-      ctx.fillText(charName.toUpperCase(), cx, h * 0.10)
-
-      // Skin name
       const skins = getSkinsForChar()
       const skinName = skins[selectedSkinIndex] || charName
-      if (skins.length > 1) {
-        ctx.fillStyle = "#64748b"
-        ctx.font = `${h * 0.04}px system-ui`
-        ctx.fillText(skinName, cx, h * 0.17)
-      }
 
-      // Character/skin image
+      // Main character/skin image
       const img = charImages[skinName] || charImages[charName]
-      const imgSize = Math.min(w * 0.5, h * 0.5)
+      const imgSize = Math.min(w * 0.4, h * 0.4)
       if (img && img.complete) {
         ctx.drawImage(img, cx - imgSize / 2, cy - imgSize / 2, imgSize, imgSize)
+      }
+
+      if (!locked) {
+        // Left/right neighbor characters (small, faded)
+        const smallSize = imgSize * 0.4
+        ctx.globalAlpha = 0.4
+        const prevIndex = (selectedIndex - 1 + characters.length) % characters.length
+        const nextIndex = (selectedIndex + 1) % characters.length
+        const prevChar = characters[prevIndex]
+        const nextChar = characters[nextIndex]
+        const prevImg = charImages[Object.keys(charData[prevChar] || {})[0]] || charImages[prevChar]
+        const nextImg = charImages[Object.keys(charData[nextChar] || {})[0]] || charImages[nextChar]
+        if (prevImg && prevImg.complete) {
+          ctx.drawImage(prevImg, cx - imgSize / 2 - smallSize - 20, cy - smallSize / 2, smallSize, smallSize)
+        }
+        if (nextImg && nextImg.complete) {
+          ctx.drawImage(nextImg, cx + imgSize / 2 + 20, cy - smallSize / 2, smallSize, smallSize)
+        }
+
+        // Above/below skin previews
+        if (skins.length > 1) {
+          const prevSkinIndex = (selectedSkinIndex - 1 + skins.length) % skins.length
+          const nextSkinIndex = (selectedSkinIndex + 1) % skins.length
+          const prevSkinImg = charImages[skins[prevSkinIndex]]
+          const nextSkinImg = charImages[skins[nextSkinIndex]]
+          if (prevSkinImg && prevSkinImg.complete) {
+            ctx.drawImage(prevSkinImg, cx - smallSize / 2, cy - imgSize / 2 - smallSize - 15, smallSize, smallSize)
+          }
+          if (nextSkinImg && nextSkinImg.complete) {
+            ctx.drawImage(nextSkinImg, cx - smallSize / 2, cy + imgSize / 2 + 15, smallSize, smallSize)
+          }
+        }
+        ctx.globalAlpha = 1
+      }
+
+      // Character name
+      ctx.fillStyle = "white"
+      ctx.font = `bold ${h * 0.07}px system-ui`
+      ctx.textAlign = "center"
+      ctx.textBaseline = "middle"
+      ctx.fillText(charName.toUpperCase(), cx, h * 0.08)
+
+      // Skin name (if multiple skins)
+      if (skins.length > 1) {
+        ctx.fillStyle = "#64748b"
+        ctx.font = `${h * 0.035}px system-ui`
+        ctx.fillText(skinName, cx, h * 0.14)
       }
 
       // Instructions
       ctx.fillStyle = locked ? "#22c55e" : "#9ca3af"
       ctx.font = `${h * 0.035}px system-ui`
       const msg = locked ? "✓ LOCKED IN (hold to unlock)" : "← → character • ↑ ↓ skin • tap to lock"
-      ctx.fillText(msg, cx, h * 0.88)
+      ctx.fillText(msg, cx, h * 0.93)
     }
 
     function drawGameControls(now) {
