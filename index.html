@@ -311,12 +311,16 @@
 
         function drawGameover() {
             const cx = canvas.width / 2
-            const cy = canvas.height / 2
+            const bannerHeight = 150
+
+            ctx.fillStyle = "rgba(0, 0, 0, 0.85)"
+            ctx.fillRect(0, 0, canvas.width, bannerHeight)
 
             ctx.fillStyle = "white"
-            ctx.font = "bold 120px system-ui"
+            ctx.font = "bold 90px system-ui"
             ctx.textAlign = "center"
-            ctx.fillText(`P${winnerPlayerNum}: ${(winnerName || "???").toUpperCase()} WINS!`, cx, cy)
+            ctx.textBaseline = "middle"
+            ctx.fillText(`P${winnerPlayerNum}: ${(winnerName || "???").toUpperCase()} WINS!`, cx, bannerHeight / 2)
         }
     </script>
 </body>
