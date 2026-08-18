@@ -160,15 +160,18 @@
                 return
             }
 
-            ctx.fillStyle = "#1e293b"
-            ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-            if (gamePhase === PHASE_LOBBY) {
-                drawLobby()
-            } else if (gamePhase === PHASE_SELECT) {
-                drawSelect()
-            } else if (gamePhase === PHASE_GAMEOVER) {
+            if (gamePhase === PHASE_GAMEOVER) {
+                // Draw on top of the frozen game frame
                 drawGameover()
+            } else {
+                ctx.fillStyle = "#1e293b"
+                ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+                if (gamePhase === PHASE_LOBBY) {
+                    drawLobby()
+                } else if (gamePhase === PHASE_SELECT) {
+                    drawSelect()
+                }
             }
 
             requestAnimationFrame(hostRender)
