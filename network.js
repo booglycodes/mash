@@ -205,13 +205,14 @@ function startGame() {
   }
 
   // Assign characters to controls
-  for (const peer of connectedPeers) {
+  for (let i = 0; i < connectedPeers.length; i++) {
+    const peer = connectedPeers[i]
     const ctrl = networkControls.get(peer.peerId)
     if (ctrl) {
       ctrl.setCharacter(peer.selectedChar)
-      // Send labels to phone
+      // Send labels and player number to phone
       const mapping = CHARACTER_MAPPINGS[peer.selectedChar] || CHARACTER_MAPPINGS.trump
-      sendCharInfo({ labels: mapping.labels, phase: PHASE_PLAYING }, peer.peerId)
+      sendCharInfo({ labels: mapping.labels, phase: PHASE_PLAYING, playerNum: i + 1 }, peer.peerId)
     }
   }
 

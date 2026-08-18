@@ -38,6 +38,7 @@
     let locked = false
     let status = "Connecting..."
     let gestureLabels = { up: "ATK 1", left: "ATK 2", right: "ATK 3", down: "ATK 4", hold: "ATK 5" }
+    let playerNum = 0
 
     // === INPUT STATE (game phase) ===
     let input = { dx: 0, dy: 0, jump: false, b0: false, b1: false, b2: false, b3: false, b4: false }
@@ -269,6 +270,13 @@
     function drawGameControls(now) {
       const w = canvas.width, h = canvas.height
 
+      // Player number
+      ctx.fillStyle = "white"
+      ctx.font = `bold ${h * 0.05}px system-ui`
+      ctx.textAlign = "center"
+      ctx.textBaseline = "top"
+      ctx.fillText(`P${playerNum}`, w / 2, 10)
+
       // Divider
       ctx.strokeStyle = "#1e293b"
       ctx.lineWidth = 2
@@ -388,6 +396,7 @@
       receiveCharInfo((data) => {
         if (data.labels) gestureLabels = data.labels
         if (data.phase) phase = data.phase
+        if (data.playerNum) playerNum = data.playerNum
       })
 
       receiveCharList((data) => {
