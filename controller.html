@@ -39,6 +39,7 @@
     let status = "Connecting..."
     let gestureLabels = { up: "ATK 1", left: "ATK 2", right: "ATK 3", down: "ATK 4", hold: "ATK 5" }
     let playerNum = 0
+    let phoneGameoverStart = 0
 
     // === INPUT STATE (game phase) ===
     let input = { dx: 0, dy: 0, jump: false, b0: false, b1: false, b2: false, b3: false, b4: false }
@@ -338,11 +339,19 @@
     }
 
     function drawGameoverScreen() {
-      ctx.fillStyle = "#9ca3af"
-      ctx.font = `${canvas.height * 0.06}px system-ui`
+      const w = canvas.width, h = canvas.height
+      const elapsed = performance.now() - phoneGameoverStart
+      const remaining = Math.max(0, Math.ceil((4000 - elapsed) / 1000))
+
+      ctx.fillStyle = "white"
+      ctx.font = `bold ${h * 0.12}px system-ui`
       ctx.textAlign = "center"
       ctx.textBaseline = "middle"
-      ctx.fillText("Waiting for next round...", canvas.width / 2, canvas.height / 2)
+      ctx.fillText(remaining, w / 2, h / 2)
+
+      ctx.fillStyle = "#9ca3af"
+      ctx.font = `${h * 0.04}px system-ui`
+      ctx.fillText("Next round in...", w / 2, h / 2 - h * 0.12)
     }
 
     requestAnimationFrame(draw)
@@ -390,6 +399,9 @@
           gestureTriggered = false
           holdActive = false
           pendingClears.length = 0
+        }
+        if (phase === "gameover") {
+          phoneGameoverStart = performance.now()
         }
       })
 
