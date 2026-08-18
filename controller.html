@@ -372,6 +372,17 @@
           locked = false
           selectedIndex = 0
         }
+        if (phase === "playing") {
+          // Reset all input state so nothing is stuck from previous round
+          input = { dx: 0, dy: 0, jump: false, b0: false, b1: false, b2: false, b3: false, b4: false }
+          joystickKnob = { x: 0, y: 0 }
+          joystickTouch = null
+          gestureTouch = null
+          gestureStart = null
+          gestureTriggered = false
+          holdActive = false
+          pendingClears.length = 0
+        }
       })
 
       receiveCharInfo((data) => {
