@@ -313,19 +313,10 @@
             const cx = canvas.width / 2
             const cy = canvas.height / 2
 
-            ctx.fillStyle = "#1e293b"
-            ctx.fillRect(0, 0, canvas.width, canvas.height)
-
             ctx.fillStyle = "white"
             ctx.font = "bold 120px system-ui"
             ctx.textAlign = "center"
             ctx.fillText((winnerName || "???").toUpperCase() + " WINS!", cx, cy)
-
-            const elapsed = performance.now() - gameoverTimer
-            const remaining = Math.max(0, Math.ceil((GAMEOVER_DURATION - elapsed) / 1000))
-            ctx.fillStyle = "#9ca3af"
-            ctx.font = "36px system-ui"
-            ctx.fillText(`Next round in ${remaining}...`, cx, cy + 80)
         }
     </script>
 </body>
