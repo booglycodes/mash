@@ -161,73 +161,65 @@ function collision_calculation(C, m1, m2, v1, v2) {
 }
 
 function handle_collisions() {
-    // Multiple passes to resolve 3+ body collisions (e.g. object sandwiched between wall and another object)
-    for (let pass = 0; pass < 3; pass++) {
-        for (let i = 0; i < all_objects.length; i++) {
-            let obj1 = all_objects[i]
-            for (let j = i + 1; j < all_objects.length; j++) {
-                let obj2 = all_objects[j]
-                let coll = colliding(obj1, obj2)
-                if (!coll.x && !coll.y) { continue }
+    for (let i = 0; i < all_objects.length; i++) {
+        let obj1 = all_objects[i]
+        for (let j = i + 1; j < all_objects.length; j++) {
+            let obj2 = all_objects[j]
+            let coll = colliding(obj1, obj2)
+            if (!coll.x && !coll.y) { continue }
 
-                if (obj1.physical_properties.collide_top_only && (coll.x || obj1.position.y < obj2.position.y)) {
-                    continue
-                }
-
-                if (obj2.physical_properties.collide_top_only && (coll.x || obj2.position.y < obj1.position.y)) {
-                    continue
-                }
-
-                if (!obj1.physical_properties.is_kinematic && !obj2.physical_properties.is_kinematic && coll.future) {
-                    let mass_fraction = null
-                    if (obj1.physical_properties.mass === Infinity) {
-                        mass_fraction = 0
-                    } else if (obj2.physical_properties.mass === Infinity) {
-                        mass_fraction = 1
-                    } else {
-                        mass_fraction = obj2.physical_properties.mass / (obj1.physical_properties.mass + obj2.physical_properties.mass)
-                    }
-
-                    let obj1_shift = mass_fraction * coll.diff
-                    let obj2_shift = (1 - mass_fraction) * -coll.diff
-
-                    let get_member = null
-                    let set_member = null
-                    if (coll.x) {
-                        obj1.position.x += obj1_shift
-                        obj2.position.x += obj2_shift
-                        get_member = velocity => velocity.x
-                        set_member = (obj, val) => obj.physical_properties.velocity.x = val
-                    }
-                    if (coll.y) {
-                        obj1.position.y += obj1_shift
-                        obj2.position.y += obj2_shift
-                        get_member = velocity => velocity.y
-                        set_member = (obj, val) => obj.physical_properties.velocity.y = val
-                    }
-                    // Only resolve velocities on the first pass to avoid double-bouncing
-                    if (pass === 0) {
-                        let new_v1 = get_coll(obj1, obj2, get_member)
-                        let new_v2 = get_coll(obj2, obj1, get_member)
-                        set_member(obj1, new_v1)
-                        set_member(obj2, new_v2)
-                    }
-                }
-
-                // notify objects what they're colliding with (only first pass)
-                if (pass === 0) {
-                    Object.values(obj1.components).forEach(component => {
-                        if (component.collision !== undefined) {
-                            component.collision(obj2, coll)
-                        }
-                    })
-                    Object.values(obj2.components).forEach(component => {
-                        if (component.collision !== undefined) {
-                            component.collision(obj1, coll)
-                        }
-                    })
-                }
+            if (obj1.physical_properties.collide_top_only && (coll.x || obj1.position.y < obj2.position.y)) {
+                continue
             }
+
+            if (obj2.physical_properties.collide_top_only && (coll.x || obj2.position.y < obj1.position.y)) {
+                continue
+            }
+
+            if (!obj1.physical_properties.is_kinematic && !obj2.physical_properties.is_kinematic && coll.future) {
+                let mass_fraction = null
+                if (obj1.physical_properties.mass === Infinity) {
+                    mass_fraction = 0
+                } else if (obj2.physical_properties.mass === Infinity) {
+                    mass_fraction = 1
+                } else {
+                    mass_fraction = obj2.physical_properties.mass / (obj1.physical_properties.mass + obj2.physical_properties.mass)
+                }
+
+                let obj1_shift = mass_fraction * coll.diff
+                let obj2_shift = (1 - mass_fraction) * -coll.diff
+
+                let get_member = null
+                let set_member = null
+                if (coll.x) {
+                    obj1.position.x += obj1_shift
+                    obj2.position.x += obj2_shift
+                    get_member = velocity => velocity.x
+                    set_member = (obj, val) => obj.physical_properties.velocity.x = val
+                }
+                if (coll.y) {
+                    obj1.position.y += obj1_shift
+                    obj2.position.y += obj2_shift
+                    get_member = velocity => velocity.y
+                    set_member = (obj, val) => obj.physical_properties.velocity.y = val
+                }
+                let new_v1 = get_coll(obj1, obj2, get_member)
+                let new_v2 = get_coll(obj2, obj1, get_member)
+                set_member(obj1, new_v1)
+                set_member(obj2, new_v2)
+            }
+
+            // notify objects what they're colliding with
+            Object.values(obj1.components).forEach(component => {
+                if (component.collision !== undefined) {
+                    component.collision(obj2, coll)
+                }
+            })
+            Object.values(obj2.components).forEach(component => {
+                if (component.collision !== undefined) {
+                    component.collision(obj1, coll)
+                }
+            })
         }
     }
 }
