@@ -18,14 +18,16 @@ const GAMEOVER_DURATION = 4000 // ms before auto-restart
 // === CHARACTER DATA (derived from game.js character_roster) ===
 let character_names_list = Object.keys(character_roster)
 
-function getCharImageSrcs() {
-  const srcs = {}
+function getCharData() {
+  const data = {}
   for (const [name, entry] of Object.entries(character_roster)) {
-    const src = Object.values(entry.skins)[0].image.src
-    // Convert absolute URL back to relative path
-    srcs[name] = new URL(src).pathname.split('/').slice(-2).join('/')
+    const skins = {}
+    for (const [skinName, skin] of Object.entries(entry.skins)) {
+      skins[skinName] = new URL(skin.image.src).pathname.split('/').slice(-2).join('/')
+    }
+    data[name] = skins
   }
-  return srcs
+  return data
 }
 
 // Button mapping per character
@@ -155,10 +157,16 @@ async function initNetwork() {
 
     if (data.type === "browse") {
       peer.selectedChar = data.char
+      peer.selectedSkin = data.skin
     } else if (data.type === "lock") {
       peer.locked = true
       peer.selectedChar = data.char
+      peer.selectedSkin = data.skin
       checkAllLocked()
+    } else if (data.type === "unlock") {
+      peer.locked = false
+      peer.selectedChar = data.char
+      peer.selectedSkin = data.skin
     }
   })
 
@@ -166,12 +174,12 @@ async function initNetwork() {
     console.log("[network] peer joined:", peerId)
     const ctrl = new NetworkControl()
     networkControls.set(peerId, ctrl)
-    connectedPeers.push({ peerId, selectedChar: character_names_list[0], locked: false })
+    connectedPeers.push({ peerId, selectedChar: character_names_list[0], selectedSkin: null, locked: false })
 
     // Send current phase and character list to new peer (slight delay for connection stability)
     setTimeout(() => {
       sendPhase({ phase: gamePhase }, peerId)
-      sendCharList({ characters: character_names_list, images: getCharImageSrcs() }, peerId)
+      sendCharList({ characters: character_names_list, charData: getCharData() }, peerId)
     }, 500)
   })
 
@@ -194,8 +202,9 @@ function transitionTo(phase) {
     for (const p of connectedPeers) {
       p.locked = false
       p.selectedChar = character_names_list[0]
+      p.selectedSkin = null
     }
-    sendCharList({ characters: character_names_list, images: getCharImageSrcs() })
+    sendCharList({ characters: character_names_list, charData: getCharData() })
   }
 }
 
