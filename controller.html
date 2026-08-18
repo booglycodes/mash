@@ -61,22 +61,8 @@
     const FLOAT_RISE = 60
     let pendingClears = []
 
-    // Character images
+    // Character images (loaded from host via network)
     const charImages = {}
-    const charImgSrcs = {
-      trump: 'images/trump.png',
-      stoner: 'images/stoner.png',
-      faceman: 'images/faceman.png',
-      knigh: 'images/knight.png',
-      utopian: 'images/utopian.png',
-      shrek: 'images/shrek.png',
-      monke: 'images/monke.png'
-    }
-    for (const [name, src] of Object.entries(charImgSrcs)) {
-      const img = new Image()
-      img.src = src
-      charImages[name] = img
-    }
 
     // === SELECT PHASE TOUCH ===
     let selectTouch = null
@@ -407,6 +393,15 @@
         if (data.characters) {
           characters = data.characters
           selectedIndex = 0
+        }
+        if (data.images) {
+          for (const [name, src] of Object.entries(data.images)) {
+            if (!charImages[name]) {
+              const img = new Image()
+              img.src = src
+              charImages[name] = img
+            }
+          }
         }
       })
 

@@ -9,18 +9,26 @@ const params = Object.fromEntries(urlSearchParams.entries());
 const weed_bg = new Image()
 weed_bg.src = 'images/whoaaaadude.webp'
 
-let character_names = ['trump', 'stoner', 'faceman', 'faceman_shaman', 'knigh', 'utopian', 'shrek', 'monke']
-let characters = [create_trump, create_stoner, create_faceman, create_faceman, create_knigh, create_utopian, create_shrek, create_monke]
+let character_roster = {
+    trump: { create: create_trump, skins: trump_skins },
+    stoner: { create: create_stoner, skins: stoner_skins },
+    faceman: { create: create_faceman, skins: faceman_skins },
+    knigh: { create: create_knigh, skins: knigh_skins },
+    utopian: { create: create_utopian, skins: utopian_skins },
+    shrek: { create: create_shrek, skins: shrek_skins },
+    monke: { create: create_monke, skins: monke_skins },
+}
 
 let spawn_positions = [new Vector2(500, 0), new Vector2(1500, 0), new Vector2(1000, 0), new Vector2(750, 0)]
 let ability_draw_locations = [new Vector2(200, 100), new Vector2(1000, 100), new Vector2(1800, 100), new Vector2(600, 100)]
 
 class PlayerMetadata {
-    constructor(stocks, player, control, index) {
+    constructor(stocks, player, control, char_name, skin_name) {
         this.stocks = stocks
         this.player = player
         this.control = control
-        this.index = index
+        this.char_name = char_name
+        this.skin_name = skin_name
     }
 }
 
@@ -65,8 +73,8 @@ function platform_semisolid(width, height, position, color) {
     return new GameObject(position, platform_physical_properties, ["ground"], {display : rect})
 }
 
-function create_player(character_function, gamepad, skin_name, spawn_position, ability_draw_location) {
-    let player = character_function(gamepad, spawn_position, ability_draw_location, skin_name)
+function create_player(char_name, skin_name, gamepad, spawn_position, ability_draw_location) {
+    let player = character_roster[char_name].create(gamepad, spawn_position, ability_draw_location, skin_name)
     all_objects.push(player)
     return player
 }
@@ -98,17 +106,18 @@ function initGame() {
         const ctrl = networkControls.get(peer.peerId)
         if (!ctrl) continue
 
-        let charIndex = character_names.indexOf(peer.selectedChar)
-        if (charIndex === -1) charIndex = 0
+        let char_name = peer.selectedChar
+        let skin_name = peer.selectedSkin || Object.keys(character_roster[char_name].skins)[0]
+        if (!character_roster[char_name]) char_name = Object.keys(character_roster)[0]
 
         let player = create_player(
-            characters[charIndex],
+            char_name,
+            skin_name,
             ctrl,
-            character_names[charIndex],
             spawn_positions[i % spawn_positions.length],
             ability_draw_locations[i % ability_draw_locations.length]
         )
-        players.push(new PlayerMetadata(stocks, player, ctrl, charIndex))
+        players.push(new PlayerMetadata(stocks, player, ctrl, char_name, skin_name))
         max_num_players++
     }
 
@@ -152,9 +161,9 @@ function gameloop() {
         }
         if (!player_alive && players[i].stocks > 0) {
             players[i].player = create_player(
-                characters[players[i].index],
+                players[i].char_name,
+                players[i].skin_name,
                 players[i].control,
-                character_names[players[i].index],
                 spawn_positions[i % spawn_positions.length],
                 ability_draw_locations[i % ability_draw_locations.length]
             )

@@ -15,8 +15,18 @@ let winnerPlayerNum = 0
 let gameoverTimer = 0
 const GAMEOVER_DURATION = 4000 // ms before auto-restart
 
-// === CHARACTER DATA ===
-let character_names_list = ['trump', 'stoner', 'faceman', 'knigh', 'utopian', 'shrek', 'monke']
+// === CHARACTER DATA (derived from game.js character_roster) ===
+let character_names_list = Object.keys(character_roster)
+
+function getCharImageSrcs() {
+  const srcs = {}
+  for (const [name, entry] of Object.entries(character_roster)) {
+    const src = Object.values(entry.skins)[0].image.src
+    // Convert absolute URL back to relative path
+    srcs[name] = new URL(src).pathname.split('/').slice(-2).join('/')
+  }
+  return srcs
+}
 
 // Button mapping per character
 const CHARACTER_MAPPINGS = {
@@ -161,7 +171,7 @@ async function initNetwork() {
     // Send current phase and character list to new peer (slight delay for connection stability)
     setTimeout(() => {
       sendPhase({ phase: gamePhase }, peerId)
-      sendCharList({ characters: character_names_list }, peerId)
+      sendCharList({ characters: character_names_list, images: getCharImageSrcs() }, peerId)
     }, 500)
   })
 
@@ -185,7 +195,7 @@ function transitionTo(phase) {
       p.locked = false
       p.selectedChar = character_names_list[0]
     }
-    sendCharList({ characters: character_names_list })
+    sendCharList({ characters: character_names_list, images: getCharImageSrcs() })
   }
 }
 
