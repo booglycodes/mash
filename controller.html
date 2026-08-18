@@ -339,19 +339,11 @@
     }
 
     function drawGameoverScreen() {
-      const w = canvas.width, h = canvas.height
-      const elapsed = performance.now() - phoneGameoverStart
-      const remaining = Math.max(0, Math.ceil((4000 - elapsed) / 1000))
-
-      ctx.fillStyle = "white"
-      ctx.font = `bold ${h * 0.12}px system-ui`
+      ctx.fillStyle = "#9ca3af"
+      ctx.font = `${canvas.height * 0.06}px system-ui`
       ctx.textAlign = "center"
       ctx.textBaseline = "middle"
-      ctx.fillText(remaining, w / 2, h / 2)
-
-      ctx.fillStyle = "#9ca3af"
-      ctx.font = `${h * 0.04}px system-ui`
-      ctx.fillText("Next round in...", w / 2, h / 2 - h * 0.12)
+      ctx.fillText("Waiting for next round...", canvas.width / 2, canvas.height / 2)
     }
 
     requestAnimationFrame(draw)
