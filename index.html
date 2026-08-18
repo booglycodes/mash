@@ -321,6 +321,12 @@
             ctx.textAlign = "center"
             ctx.textBaseline = "middle"
             ctx.fillText(`P${winnerPlayerNum}: ${(winnerName || "???").toUpperCase()} WINS!`, cx, bannerHeight / 2)
+
+            const elapsed = performance.now() - gameoverTimer
+            const remaining = Math.max(0, Math.ceil((GAMEOVER_DURATION - elapsed) / 1000))
+            ctx.fillStyle = "#9ca3af"
+            ctx.font = "36px system-ui"
+            ctx.fillText(`${remaining}`, cx, bannerHeight + 40)
         }
     </script>
 </body>
