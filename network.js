@@ -11,6 +11,7 @@ const PHASE_GAMEOVER = "gameover"
 let gamePhase = PHASE_LOBBY
 let connectedPeers = [] // { peerId, selectedChar, locked }
 let winnerName = null
+let winnerPlayerNum = 0
 let gameoverTimer = 0
 const GAMEOVER_DURATION = 4000 // ms before auto-restart
 
@@ -218,8 +219,9 @@ function startGame() {
   initGame() // defined in game.js
 }
 
-function onGameOver(winner) {
+function onGameOver(winner, playerNum) {
   winnerName = winner
+  winnerPlayerNum = playerNum
   transitionTo(PHASE_GAMEOVER)
   gameoverTimer = performance.now()
 }

@@ -171,7 +171,14 @@ function gameloop() {
 
     if (num_players_alive === 1 && num_players_alive < max_num_players) {
         gameRunning = false
-        onGameOver(current_players[0].tags[0])
+        let winnerIndex = -1
+        for (let i = 0; i < players.length; i++) {
+            if (players[i].player == current_players[0]) {
+                winnerIndex = i
+                break
+            }
+        }
+        onGameOver(current_players[0].tags[0], winnerIndex + 1)
         return
     }
 
