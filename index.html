@@ -160,18 +160,16 @@
                 return
             }
 
-            if (gamePhase === PHASE_GAMEOVER) {
-                // Draw on top of the frozen game frame
-                drawGameover()
-            } else {
+            if (gamePhase === PHASE_LOBBY) {
                 ctx.fillStyle = "#1e293b"
                 ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-                if (gamePhase === PHASE_LOBBY) {
-                    drawLobby()
-                } else if (gamePhase === PHASE_SELECT) {
-                    drawSelect()
-                }
+                drawLobby()
+            } else if (gamePhase === PHASE_SELECT) {
+                ctx.fillStyle = "#1e293b"
+                ctx.fillRect(0, 0, canvas.width, canvas.height)
+                drawSelect()
+            } else if (gamePhase === PHASE_GAMEOVER) {
+                drawGameover()
             }
 
             requestAnimationFrame(hostRender)
@@ -315,8 +313,11 @@
             const cx = canvas.width / 2
             const cy = canvas.height / 2
 
+            ctx.fillStyle = "#1e293b"
+            ctx.fillRect(0, 0, canvas.width, canvas.height)
+
             ctx.fillStyle = "white"
-            ctx.font = "bold 100px system-ui"
+            ctx.font = "bold 120px system-ui"
             ctx.textAlign = "center"
             ctx.fillText((winnerName || "???").toUpperCase() + " WINS!", cx, cy)
 

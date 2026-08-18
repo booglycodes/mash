@@ -170,7 +170,6 @@ function gameloop() {
     }
 
     if (num_players_alive === 1 && num_players_alive < max_num_players) {
-        draw_win_screen(current_players[0])
         gameRunning = false
         onGameOver(current_players[0].tags[0])
         return
