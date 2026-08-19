@@ -426,16 +426,16 @@
       const { joinRoom } = await import("https://esm.run/@trystero-p2p/mqtt")
 
       const room = joinRoom({ appId: "supermashbruddas-phone" }, roomName)
-      const inputAction = room.makeAction("input")
-      const phaseAction = room.makeAction("phase")
-      const charInfoAction = room.makeAction("charinfo")
-      const charListAction = room.makeAction("charlist")
-      const selectAction = room.makeAction("select")
+      const [_sendInput, _receiveInput] = room.makeAction("input")
+      const [_sendPhase, _receivePhase] = room.makeAction("phase")
+      const [_sendCharInfo, _receiveCharInfo] = room.makeAction("charinfo")
+      const [_sendCharList, _receiveCharList] = room.makeAction("charlist")
+      const [_sendSelect, _receiveSelect] = room.makeAction("select")
 
-      sendInput = inputAction.send
-      sendSelectMsg = selectAction.send
+      sendInput = _sendInput
+      sendSelectMsg = _sendSelect
 
-      phaseAction.onMessage = (data) => {
+      _receivePhase((data) => {
         phase = data.phase
         if (phase === "select") {
           locked = false
@@ -455,15 +455,15 @@
         if (phase === "gameover") {
           phoneGameoverStart = performance.now()
         }
-      }
+      })
 
-      charInfoAction.onMessage = (data) => {
+      _receiveCharInfo((data) => {
         if (data.labels) gestureLabels = data.labels
         if (data.phase) phase = data.phase
         if (data.playerNum) playerNum = data.playerNum
-      }
+      })
 
-      charListAction.onMessage = (data) => {
+      _receiveCharList((data) => {
         if (data.characters) {
           characters = data.characters
           selectedIndex = 0
@@ -481,10 +481,10 @@
             }
           }
         }
-      }
+      })
 
-      room.onPeerJoin = () => { status = "Connected ✓" }
-      room.onPeerLeave = () => { status = "Host disconnected" }
+      room.onPeerJoin(() => { status = "Connected ✓" })
+      room.onPeerLeave(() => { status = "Host disconnected" })
 
       // Send game input at 30Hz
       setInterval(() => {
