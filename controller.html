@@ -100,10 +100,6 @@
               return
             }
 
-        for (const t of e.changedTouches) {
-          if (t.identifier === selectTouch) {
-            const dx = t.clientX - selectStartX
-            const dy = t.clientY - selectStartY
             if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
               // Horizontal swipe — change character
               if (dx < 0) selectedIndex = (selectedIndex + 1) % characters.length
