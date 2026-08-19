@@ -71,7 +71,6 @@
     let selectStartX = 0
     let selectStartY = 0
     let selectedSkinIndex = 0
-    let selectHoldTimer = null
 
     function getSkinsForChar() {
       const charName = characters[selectedIndex]
@@ -85,23 +84,21 @@
         selectTouch = touch.identifier
         selectStartX = touch.clientX
         selectStartY = touch.clientY
-
-        // Start hold timer for unlock
-        if (locked) {
-          selectHoldTimer = setTimeout(() => {
-            locked = false
-            sendSelectMsg({ type: "unlock", char: characters[selectedIndex], skin: getSkinsForChar()[selectedSkinIndex] })
-            selectHoldTimer = null
-          }, 500)
-        }
       } else if (e.type === "touchend") {
-        // Cancel hold timer
-        if (selectHoldTimer) {
-          clearTimeout(selectHoldTimer)
-          selectHoldTimer = null
-        }
+        for (const t of e.changedTouches) {
+          if (t.identifier === selectTouch) {
+            const dx = t.clientX - selectStartX
+            const dy = t.clientY - selectStartY
 
-        if (locked) return
+            if (locked) {
+              // Swipe up to unlock
+              if (dy < -40 && Math.abs(dy) > Math.abs(dx)) {
+                locked = false
+                sendSelectMsg({ type: "unlock", char: characters[selectedIndex], skin: getSkinsForChar()[selectedSkinIndex] })
+              }
+              selectTouch = null
+              return
+            }
 
         for (const t of e.changedTouches) {
           if (t.identifier === selectTouch) {
@@ -333,7 +330,7 @@
       // Instructions
       ctx.fillStyle = locked ? "#22c55e" : "#9ca3af"
       ctx.font = `${h * 0.035}px system-ui`
-      const msg = locked ? "✓ LOCKED IN (hold to unlock)" : "← → character • ↑ ↓ skin • tap to lock"
+      const msg = locked ? "✓ LOCKED IN (swipe up to unlock)" : "← → character • ↑ ↓ skin • tap to lock"
       ctx.fillText(msg, cx, h * 0.93)
     }
 
