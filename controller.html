@@ -430,25 +430,9 @@
     }
 
     async function startController(roomName) {
-      const { joinRoom } = await import("https://esm.run/trystero@0.24.0")
+      const { joinRoom } = await import("https://esm.run/trystero@0.22.0")
 
-      const room = joinRoom({
-        appId: "supermashbruddas-phone",
-        relayConfig: {
-          urls: [
-            'wss://relay.damus.io',
-            'wss://nos.lol',
-            'wss://relay.primal.net',
-            'wss://relay.nostr.com',
-            'wss://nostr.bitcoiner.social',
-            'wss://relay.nostr.net',
-            'wss://nostr.oxtr.dev',
-            'wss://offchain.pub',
-            'wss://nostr.mom',
-            'wss://soloco.nl'
-          ]
-        }
-      }, roomName)
+      const room = joinRoom({ appId: "supermashbruddas-phone" }, roomName)
       const [_sendInput, _receiveInput] = room.makeAction("input")
       const [_sendPhase, receivePhase] = room.makeAction("phase")
       const [_sendCharInfo, receiveCharInfo] = room.makeAction("charinfo")
