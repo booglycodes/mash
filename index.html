@@ -94,20 +94,18 @@
                 const x = 200 + Math.random() * (canvas.width - 400)
                 const y = 200 + Math.random() * (canvas.height - 400)
 
-                const w = lobbyCharSize * skin.proportions.x
-                const h = lobbyCharSize * skin.proportions.y
-                const imgComp = new ImageComponent(skin.image, skin.offset, false)
                 const obj = new GameObject(
                     new Vector2(x, y),
                     new PhysicalProperties(
                         new Vector2(Math.cos(angle) * speed, Math.sin(angle) * speed),
                         10, 0,
-                        new Vector2(w, h),
+                        new Vector2(lobbyCharSize, lobbyCharSize),
                         1, false
                     ),
                     ["bouncer"],
-                    { display: imgComp }
+                    {}
                 )
+                obj.skin = skin
                 all_objects.push(obj)
             }
         }
@@ -172,7 +170,14 @@
             // Run physics + draw all objects (same as gameloop)
             handle_collisions()
             for (const obj of all_objects) {
-                Object.values(obj.components).forEach(c => { if (c.draw) c.draw() })
+                if (obj.skin) {
+                    // Draw with skin proportions (visual) but physics uses base dimensions
+                    let actual_size = obj.physical_properties.dimensions.vector_scale(obj.skin.proportions)
+                    let actual_position = actual_size.vector_scale(obj.skin.offset).add(obj.position)
+                    drawImage(obj.skin.image, actual_position.x, actual_position.y, actual_size.x, actual_size.y, 0, false, false, true)
+                } else {
+                    Object.values(obj.components).forEach(c => { if (c.draw) c.draw() })
+                }
             }
             handle_position_update()
 
