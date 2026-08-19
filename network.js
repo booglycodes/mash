@@ -125,27 +125,7 @@ async function initNetwork() {
   const { joinRoom } = await import("https://esm.run/trystero")
 
   const roomName = Math.random().toString(36).slice(2, 12)
-  room = joinRoom({
-    appId: TRYSTERO_APP_ID,
-    rtcConfig: {
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun2.l.google.com:19302' },
-        { urls: 'stun:stun.cloudflare.com:3478' },
-        {
-          urls: 'turn:openrelay.metered.ca:80',
-          username: 'openrelayproject',
-          credential: 'openrelayproject'
-        },
-        {
-          urls: 'turn:openrelay.metered.ca:443',
-          username: 'openrelayproject',
-          credential: 'openrelayproject'
-        }
-      ]
-    }
-  }, roomName)
+  room = joinRoom({ appId: TRYSTERO_APP_ID }, roomName)
 
   const inputAction = room.makeAction("input")
   const phaseAction = room.makeAction("phase")
