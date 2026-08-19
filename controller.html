@@ -430,7 +430,7 @@
     }
 
     async function startController(roomName) {
-      const { joinRoom } = await import("https://esm.run/trystero@0.22.0")
+      const { joinRoom } = await import("https://esm.run/trystero@0.24.0")
 
       const room = joinRoom({ appId: "supermashbruddas-phone" }, roomName)
       const [_sendInput, _receiveInput] = room.makeAction("input")
