@@ -127,14 +127,6 @@ async function initNetwork() {
   const roomName = Math.random().toString(36).slice(2, 12)
   room = joinRoom({
     appId: TRYSTERO_APP_ID,
-    relayConfig: {
-      urls: [
-        'wss://relay.damus.io',
-        'wss://nos.lol',
-        'wss://relay.snort.social',
-        'wss://nostr.wine'
-      ]
-    },
     rtcConfig: {
       iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
