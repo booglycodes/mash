@@ -114,8 +114,6 @@ let room = null
 let sendPhase = null
 let sendCharInfo = null
 let sendCharList = null
-let receiveInput = null
-let receiveSelect = null
 const networkControls = new Map()
 
 function getQRUrl(roomName) {
@@ -157,28 +155,22 @@ async function initNetwork() {
     }
   }, roomName)
 
-  const [_sendInput, _receiveInput] = room.makeAction("input")
-  const [_sendPhase, _receivePhase] = room.makeAction("phase")
-  const [_sendCharInfo, _receiveCharInfo] = room.makeAction("charinfo")
-  const [_sendCharList, _receiveCharList] = room.makeAction("charlist")
-  const [_sendSelect, _receiveSelect] = room.makeAction("select")
+  const inputAction = room.makeAction("input")
+  const phaseAction = room.makeAction("phase")
+  const charInfoAction = room.makeAction("charinfo")
+  const charListAction = room.makeAction("charlist")
+  const selectAction = room.makeAction("select")
 
-  sendPhase = _sendPhase
-  sendCharInfo = _sendCharInfo
-  sendCharList = _sendCharList
-  receiveInput = _receiveInput
-  receiveSelect = _receiveSelect
+  sendPhase = phaseAction.send
+  sendCharInfo = charInfoAction.send
+  sendCharList = charListAction.send
 
-  _receivePhase(() => {})
-  _receiveCharInfo(() => {})
-  _receiveCharList(() => {})
-
-  receiveInput((data, peerId) => {
+  inputAction.onMessage = (data, {peerId}) => {
     const ctrl = networkControls.get(peerId)
     if (ctrl) ctrl.updateInput(data)
-  })
+  }
 
-  _receiveSelect((data, peerId) => {
+  selectAction.onMessage = (data, {peerId}) => {
     if (gamePhase !== PHASE_SELECT) return
     const peer = connectedPeers.find(p => p.peerId === peerId)
     if (!peer) return
@@ -196,9 +188,9 @@ async function initNetwork() {
       peer.selectedChar = data.char
       peer.selectedSkin = data.skin
     }
-  })
+  }
 
-  room.onPeerJoin(peerId => {
+  room.onPeerJoin = peerId => {
     console.log("[network] peer joined:", peerId)
     const ctrl = new NetworkControl()
     networkControls.set(peerId, ctrl)
@@ -206,16 +198,16 @@ async function initNetwork() {
 
     // Send current phase and character list to new peer (slight delay for connection stability)
     setTimeout(() => {
-      sendPhase({ phase: gamePhase }, peerId)
-      sendCharList({ characters: character_names_list, charData: getCharData() }, peerId)
+      sendPhase({ phase: gamePhase }, {target: peerId})
+      sendCharList({ characters: character_names_list, charData: getCharData() }, {target: peerId})
     }, 500)
-  })
+  }
 
-  room.onPeerLeave(peerId => {
+  room.onPeerLeave = peerId => {
     console.log("[network] peer left:", peerId)
     networkControls.delete(peerId)
     connectedPeers = connectedPeers.filter(p => p.peerId !== peerId)
-  })
+  }
 
   return roomName
 }
@@ -259,7 +251,7 @@ function startGame() {
       ctrl.setCharacter(peer.selectedChar)
       // Send labels and player number to phone
       const mapping = CHARACTER_MAPPINGS[peer.selectedChar] || CHARACTER_MAPPINGS.trump
-      sendCharInfo({ labels: mapping.labels, phase: PHASE_PLAYING, playerNum: i + 1 }, peer.peerId)
+      sendCharInfo({ labels: mapping.labels, phase: PHASE_PLAYING, playerNum: i + 1 }, {target: peer.peerId})
     }
   }
 
