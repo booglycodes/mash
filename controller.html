@@ -425,7 +425,27 @@
     async function startController(roomName) {
       const { joinRoom } = await import("https://esm.run/trystero@0.22.0")
 
-      const room = joinRoom({ appId: "supermashbruddas-phone" }, roomName)
+      const room = joinRoom({
+        appId: "supermashbruddas-phone",
+        rtcConfig: {
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun2.l.google.com:19302' },
+            { urls: 'stun:stun.cloudflare.com:3478' },
+            {
+              urls: 'turn:openrelay.metered.ca:80',
+              username: 'openrelayproject',
+              credential: 'openrelayproject'
+            },
+            {
+              urls: 'turn:openrelay.metered.ca:443',
+              username: 'openrelayproject',
+              credential: 'openrelayproject'
+            }
+          ]
+        }
+      }, roomName)
       const [_sendInput, _receiveInput] = room.makeAction("input")
       const [_sendPhase, receivePhase] = room.makeAction("phase")
       const [_sendCharInfo, receiveCharInfo] = room.makeAction("charinfo")
