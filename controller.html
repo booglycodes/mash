@@ -423,7 +423,7 @@
     }
 
     async function startController(roomName) {
-      const { joinRoom } = await import("https://esm.run/@trystero-p2p/torrent")
+      const { joinRoom } = await import("https://esm.run/@trystero-p2p/mqtt")
 
       const room = joinRoom({ appId: "supermashbruddas-phone" }, roomName)
       const inputAction = room.makeAction("input")
