@@ -122,7 +122,7 @@ function getQRUrl(roomName) {
 }
 
 async function initNetwork() {
-  const { joinRoom } = await import("https://esm.run/trystero")
+  const { joinRoom } = await import("https://esm.run/trystero/torrent")
 
   const roomName = Math.random().toString(36).slice(2, 12)
   room = joinRoom({ appId: TRYSTERO_APP_ID }, roomName)
