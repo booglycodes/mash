@@ -124,7 +124,7 @@ function getQRUrl(roomName) {
 }
 
 async function initNetwork() {
-  const { joinRoom } = await import("https://esm.run/trystero@0.22.0")
+  const { joinRoom } = await import("https://esm.run/@trystero-p2p/mqtt@0.22.0")
 
   const roomName = Math.random().toString(36).slice(2, 12)
   room = joinRoom({
