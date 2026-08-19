@@ -78,18 +78,23 @@
             const qr = getQrRect()
             all_objects.push(platform(qr.w, qr.h, new Vector2(qr.x + qr.w / 2, qr.y + qr.h / 2)))
 
-            // Pick 5 random characters
-            const allCharNames = Object.keys(charImages)
-            const shuffled = allCharNames.sort(() => Math.random() - 0.5)
+            // Pick 5 random character+skin combos
+            const allSkins = []
+            for (const [charName, entry] of Object.entries(character_roster)) {
+                for (const skin of Object.values(entry.skins)) {
+                    allSkins.push(skin.image)
+                }
+            }
+            const shuffled = allSkins.sort(() => Math.random() - 0.5)
             const picked = shuffled.slice(0, 5)
 
-            for (const name of picked) {
+            for (const img of picked) {
                 const speed = 3 + Math.random() * 4
                 const angle = Math.random() * Math.PI * 2
                 const x = 200 + Math.random() * (canvas.width - 400)
                 const y = 200 + Math.random() * (canvas.height - 400)
 
-                const imgComp = new ImageComponent(charImages[name], new Vector2(0, 0), false)
+                const imgComp = new ImageComponent(img, new Vector2(0, 0), false)
                 const obj = new GameObject(
                     new Vector2(x, y),
                     new PhysicalProperties(
