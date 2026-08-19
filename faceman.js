@@ -4,7 +4,7 @@ const puke_noise = new Audio('sounds/puke.mp3')
 
 let faceman_skins = {
     faceman : new Skin('images/faceman.png', new Vector2(1, 1)),
-    faceman_shaman : new Skin('images/faceman_shaman.png', new Vector2(1.5, 1.5), new Vector2(0, -0.17))
+    shaman : new Skin('images/faceman_shaman.png', new Vector2(1.5, 1.5), new Vector2(0, -0.17))
 }
 
 let teeth_img = new Image()

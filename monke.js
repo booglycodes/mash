@@ -1,5 +1,7 @@
 let monke_skins = {
-    monke : new Skin('images/monke.png', new Vector2(1, 1))
+    monke : new Skin('images/monke.png', new Vector2(1, 1)),
+    abo : new Skin('images/abo.png', new Vector2(1, 1)),
+    howler : new Skin('images/howler.png', new Vector2(1, 1))
 }
 let banana = new Image()
 banana.src = 'images/banana.png'
