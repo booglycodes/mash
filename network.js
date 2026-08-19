@@ -124,10 +124,26 @@ function getQRUrl(roomName) {
 }
 
 async function initNetwork() {
-  const { joinRoom } = await import("https://esm.run/trystero@0.22.0")
+  const { joinRoom } = await import("https://esm.run/trystero@0.24.0")
 
   const roomName = Math.random().toString(36).slice(2, 12)
-  room = joinRoom({ appId: TRYSTERO_APP_ID }, roomName)
+  room = joinRoom({
+    appId: TRYSTERO_APP_ID,
+    relayConfig: {
+      urls: [
+        'wss://relay.damus.io',
+        'wss://nos.lol',
+        'wss://relay.primal.net',
+        'wss://relay.nostr.com',
+        'wss://nostr.bitcoiner.social',
+        'wss://relay.nostr.net',
+        'wss://nostr.oxtr.dev',
+        'wss://offchain.pub',
+        'wss://nostr.mom',
+        'wss://soloco.nl'
+      ]
+    }
+  }, roomName)
 
   const [_sendInput, _receiveInput] = room.makeAction("input")
   const [_sendPhase, _receivePhase] = room.makeAction("phase")
