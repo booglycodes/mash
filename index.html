@@ -78,20 +78,18 @@
             const qr = getQrRect()
             all_objects.push(platform(qr.w, qr.h, new Vector2(qr.x + qr.w / 2, qr.y + qr.h / 2)))
 
-            // Pick 5 random skins
-            const allSkins = []
-            for (const entry of Object.values(character_roster)) {
-                for (const skin of Object.values(entry.skins)) {
-                    allSkins.push(skin)
-                }
-            }
-            for (let i = 0; i < 5; i++) {
-                const skin = allSkins[Math.floor(Math.random() * allSkins.length)]
+            // Pick 5 random characters
+            const allCharNames = Object.keys(charImages)
+            const shuffled = allCharNames.sort(() => Math.random() - 0.5)
+            const picked = shuffled.slice(0, 5)
+
+            for (const name of picked) {
                 const speed = 3 + Math.random() * 4
                 const angle = Math.random() * Math.PI * 2
                 const x = 200 + Math.random() * (canvas.width - 400)
                 const y = 200 + Math.random() * (canvas.height - 400)
 
+                const imgComp = new ImageComponent(charImages[name], new Vector2(0, 0), false)
                 const obj = new GameObject(
                     new Vector2(x, y),
                     new PhysicalProperties(
@@ -101,9 +99,8 @@
                         1, false
                     ),
                     ["bouncer"],
-                    {}
+                    { display: imgComp }
                 )
-                obj.skin = skin
                 all_objects.push(obj)
             }
         }
@@ -168,14 +165,7 @@
             // Run physics + draw all objects (same as gameloop)
             handle_collisions()
             for (const obj of all_objects) {
-                if (obj.skin) {
-                    // Draw with skin proportions (visual) but physics uses base dimensions
-                    let actual_size = obj.physical_properties.dimensions.vector_scale(obj.skin.proportions)
-                    let actual_position = actual_size.vector_scale(obj.skin.offset).add(obj.position)
-                    drawImage(obj.skin.image, actual_position.x, actual_position.y, actual_size.x, actual_size.y, 0, false, false, true)
-                } else {
-                    Object.values(obj.components).forEach(c => { if (c.draw) c.draw() })
-                }
+                Object.values(obj.components).forEach(c => { if (c.draw) c.draw() })
             }
             handle_position_update()
 

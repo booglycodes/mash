@@ -71,6 +71,7 @@
     let selectStartX = 0
     let selectStartY = 0
     let selectedSkinIndex = 0
+    let selectHoldTimer = null
 
     function getSkinsForChar() {
       const charName = characters[selectedIndex]
@@ -84,22 +85,28 @@
         selectTouch = touch.identifier
         selectStartX = touch.clientX
         selectStartY = touch.clientY
+
+        // Start hold timer for unlock
+        if (locked) {
+          selectHoldTimer = setTimeout(() => {
+            locked = false
+            sendSelectMsg({ type: "unlock", char: characters[selectedIndex], skin: getSkinsForChar()[selectedSkinIndex] })
+            selectHoldTimer = null
+          }, 500)
+        }
       } else if (e.type === "touchend") {
+        // Cancel hold timer
+        if (selectHoldTimer) {
+          clearTimeout(selectHoldTimer)
+          selectHoldTimer = null
+        }
+
+        if (locked) return
+
         for (const t of e.changedTouches) {
           if (t.identifier === selectTouch) {
             const dx = t.clientX - selectStartX
             const dy = t.clientY - selectStartY
-
-            if (locked) {
-              // Swipe up to unlock
-              if (dy < -40 && Math.abs(dy) > Math.abs(dx)) {
-                locked = false
-                sendSelectMsg({ type: "unlock", char: characters[selectedIndex], skin: getSkinsForChar()[selectedSkinIndex] })
-              }
-              selectTouch = null
-              return
-            }
-
             if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
               // Horizontal swipe — change character
               if (dx < 0) selectedIndex = (selectedIndex + 1) % characters.length
@@ -326,7 +333,7 @@
       // Instructions
       ctx.fillStyle = locked ? "#22c55e" : "#9ca3af"
       ctx.font = `${h * 0.035}px system-ui`
-      const msg = locked ? "✓ LOCKED IN (swipe up to unlock)" : "← → character • ↑ ↓ skin • tap to lock"
+      const msg = locked ? "✓ LOCKED IN (hold to unlock)" : "← → character • ↑ ↓ skin • tap to lock"
       ctx.fillText(msg, cx, h * 0.93)
     }
 
@@ -423,19 +430,21 @@
     }
 
     async function startController(roomName) {
-      const { joinRoom } = await import("https://esm.run/@trystero-p2p/mqtt")
+      const { joinRoom } = await import("https://esm.run/trystero@0.22.0")
 
       const room = joinRoom({ appId: "supermashbruddas-phone" }, roomName)
       const [_sendInput, _receiveInput] = room.makeAction("input")
-      const [_sendPhase, _receivePhase] = room.makeAction("phase")
-      const [_sendCharInfo, _receiveCharInfo] = room.makeAction("charinfo")
-      const [_sendCharList, _receiveCharList] = room.makeAction("charlist")
+      const [_sendPhase, receivePhase] = room.makeAction("phase")
+      const [_sendCharInfo, receiveCharInfo] = room.makeAction("charinfo")
+      const [_sendCharList, receiveCharList] = room.makeAction("charlist")
       const [_sendSelect, _receiveSelect] = room.makeAction("select")
 
       sendInput = _sendInput
       sendSelectMsg = _sendSelect
+      _receiveInput(() => {})
+      _receiveSelect(() => {})
 
-      _receivePhase((data) => {
+      receivePhase((data) => {
         phase = data.phase
         if (phase === "select") {
           locked = false
@@ -457,13 +466,13 @@
         }
       })
 
-      _receiveCharInfo((data) => {
+      receiveCharInfo((data) => {
         if (data.labels) gestureLabels = data.labels
         if (data.phase) phase = data.phase
         if (data.playerNum) playerNum = data.playerNum
       })
 
-      _receiveCharList((data) => {
+      receiveCharList((data) => {
         if (data.characters) {
           characters = data.characters
           selectedIndex = 0

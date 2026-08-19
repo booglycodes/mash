@@ -114,6 +114,8 @@ let room = null
 let sendPhase = null
 let sendCharInfo = null
 let sendCharList = null
+let receiveInput = null
+let receiveSelect = null
 const networkControls = new Map()
 
 function getQRUrl(roomName) {
@@ -122,7 +124,7 @@ function getQRUrl(roomName) {
 }
 
 async function initNetwork() {
-  const { joinRoom } = await import("https://esm.run/@trystero-p2p/mqtt")
+  const { joinRoom } = await import("https://esm.run/trystero@0.22.0")
 
   const roomName = Math.random().toString(36).slice(2, 12)
   room = joinRoom({ appId: TRYSTERO_APP_ID }, roomName)
@@ -136,8 +138,14 @@ async function initNetwork() {
   sendPhase = _sendPhase
   sendCharInfo = _sendCharInfo
   sendCharList = _sendCharList
+  receiveInput = _receiveInput
+  receiveSelect = _receiveSelect
 
-  _receiveInput((data, peerId) => {
+  _receivePhase(() => {})
+  _receiveCharInfo(() => {})
+  _receiveCharList(() => {})
+
+  receiveInput((data, peerId) => {
     const ctrl = networkControls.get(peerId)
     if (ctrl) ctrl.updateInput(data)
   })
