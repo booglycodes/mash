@@ -364,9 +364,10 @@
 
       // Instructions
       ctx.fillStyle = locked ? "#22c55e" : "#9ca3af"
-      ctx.font = `${Math.min(h * 0.035, w * 0.02)}px system-ui`
+      ctx.font = `${Math.min(h * 0.05, w * 0.03)}px system-ui`
+      ctx.textAlign = "right"
       const msg = locked ? "✓ LOCKED IN (hold to unlock)" : "← → character • ↑ ↓ skin • tap to lock"
-      ctx.fillText(msg, cx, h * 0.95)
+      ctx.fillText(msg, w - w * 0.03, h * 0.95)
     }
 
     function drawGameControls(now) {
