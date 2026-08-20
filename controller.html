@@ -91,6 +91,15 @@
     let selectStartY = 0
     let selectedSkinIndex = 0
 
+    // Select screen animations
+    let selectFadeInStart = 0
+    let lockAnimStart = 0
+    let unlockAnimStart = 0
+    const FADE_IN_DURATION = 400
+    const LOCK_ANIM_DURATION = 600
+    const VIBRATE_DURATION = 400
+    const UNLOCK_ANIM_DURATION = 300
+
     function getSkinsForChar() {
       const charName = characters[selectedIndex]
       if (!charData[charName]) return []
@@ -113,6 +122,7 @@
               const dy = pos.y - selectStartY
               if (dy < -40) {
                 locked = false
+                unlockAnimStart = performance.now()
                 sendSelectMsg({ type: "unlock", char: characters[selectedIndex], skin: getSkinsForChar()[selectedSkinIndex] })
               }
               selectTouch = null
@@ -143,6 +153,7 @@
             } else {
               // Tap = lock in
               locked = true
+              lockAnimStart = performance.now()
               const skins = getSkinsForChar()
               sendSelectMsg({ type: "lock", char: characters[selectedIndex], skin: skins[selectedSkinIndex] })
             }
@@ -298,24 +309,53 @@
     }
 
     function drawSelectScreen() {
+      const now = performance.now()
       const w = logicalWidth(), h = logicalHeight()
       const cx = w / 2, cy = h * 0.52
+
+      // Fade in
+      const fadeAge = now - selectFadeInStart
+      const fadeAlpha = selectFadeInStart ? Math.min(1, fadeAge / FADE_IN_DURATION) : 1
+
+      // Lock animation progress
+      const lockAge = now - lockAnimStart
+      const lockT = lockAnimStart ? Math.min(1, lockAge / LOCK_ANIM_DURATION) : 1
+      const vibrateT = lockAnimStart ? Math.max(0, Math.min(1, (lockAge - LOCK_ANIM_DURATION * 0.3) / VIBRATE_DURATION)) : 1
+
+      // Unlock animation progress
+      const unlockAge = now - unlockAnimStart
+      const unlockT = unlockAnimStart ? Math.min(1, unlockAge / UNLOCK_ANIM_DURATION) : 1
+
+      // Easing
+      const easeOut = t => 1 - Math.pow(1 - t, 3)
+      const slideIn = locked ? easeOut(lockT) : (unlockAnimStart && unlockT < 1 ? 1 - easeOut(unlockT) : 0)
+
+      // Vibrate offset for character when locking
+      let vibrateX = 0
+      if (locked && vibrateT < 1) {
+        vibrateX = Math.sin(vibrateT * Math.PI * 8) * (1 - vibrateT) * 6
+      }
+
+      ctx.globalAlpha = fadeAlpha
 
       const charName = characters[selectedIndex] || "???"
       const skins = getSkinsForChar()
       const skinName = skins[selectedSkinIndex] || charName
 
-      // Main character/skin image — constrain so it doesn't overlap name or instructions
+      // Main character/skin image
       const img = charImages[skinName] || charImages[charName]
       const imgSize = Math.min(w * 0.3, h * 0.5)
       if (img && img.complete) {
-        ctx.drawImage(img, cx - imgSize / 2, cy - imgSize / 2, imgSize, imgSize)
+        ctx.drawImage(img, cx - imgSize / 2 + vibrateX, cy - imgSize / 2, imgSize, imgSize)
       }
 
       if (!locked) {
+        // Fade out neighbors during unlock
+        const neighborAlpha = unlockAnimStart && unlockT < 1 ? easeOut(unlockT) : 1
+
         // Left/right neighbor characters (small, faded)
         const smallSize = imgSize * 0.35
-        ctx.globalAlpha = 0.4
+        ctx.globalAlpha = fadeAlpha * 0.4 * neighborAlpha
         const prevIndex = (selectedIndex - 1 + characters.length) % characters.length
         const nextIndex = (selectedIndex + 1) % characters.length
         const prevChar = characters[prevIndex]
@@ -342,35 +382,40 @@
             ctx.drawImage(nextSkinImg, cx - smallSize / 2, cy + imgSize / 2 + 10, smallSize, smallSize)
           }
         }
-        ctx.globalAlpha = 1
+        ctx.globalAlpha = fadeAlpha
       }
 
-      // Character name
+      // Character name — slides in from left when locking
+      const nameSlideOffset = locked ? (1 - easeOut(lockT)) * -w * 0.3 : 0
       ctx.fillStyle = "white"
       ctx.font = `bold ${Math.min(h * 0.09, w * 0.05)}px system-ui`
       ctx.textAlign = locked ? "center" : "left"
       ctx.textBaseline = "middle"
-      ctx.fillText(charName.toUpperCase(), locked ? cx : w * 0.03, h * 0.06)
+      ctx.fillText(charName.toUpperCase(), (locked ? cx : w * 0.03) + nameSlideOffset, h * 0.06)
 
       // Skin name (if multiple skins)
       if (skins.length > 1) {
         ctx.fillStyle = "#64748b"
         ctx.font = `${Math.min(h * 0.05, w * 0.028)}px system-ui`
         ctx.textAlign = locked ? "center" : "left"
-        ctx.fillText(skinName, locked ? cx : w * 0.03, h * 0.12)
+        ctx.fillText(skinName, (locked ? cx : w * 0.03) + nameSlideOffset, h * 0.12)
       }
 
-      // Instructions
+      // Instructions — slides in from bottom when locking
+      const instrSlideOffset = locked ? (1 - easeOut(lockT)) * h * 0.2 : 0
       ctx.fillStyle = locked ? "#22c55e" : "#9ca3af"
       if (locked) {
+        ctx.globalAlpha = fadeAlpha * easeOut(lockT)
         ctx.font = `${Math.min(h * 0.06, w * 0.035)}px system-ui`
         ctx.textAlign = "center"
-        ctx.fillText("✓ LOCKED IN (swipe up to unlock)", cx, h * 0.95)
+        ctx.fillText("✓ LOCKED IN (swipe up to unlock)", cx, h * 0.95 + instrSlideOffset)
       } else {
         ctx.font = `${Math.min(h * 0.04, w * 0.022)}px system-ui`
         ctx.textAlign = "right"
         ctx.fillText("← → character • ↑ ↓ skin • tap to lock", w - w * 0.03, h * 0.95)
       }
+
+      ctx.globalAlpha = 1
     }
 
     function drawGameControls(now) {
@@ -485,6 +530,7 @@
         if (phase === "select") {
           locked = false
           selectedIndex = 0
+          selectFadeInStart = performance.now()
         }
         if (phase === "playing") {
           // Reset all input state so nothing is stuck from previous round
