@@ -90,7 +90,6 @@
     let selectStartX = 0
     let selectStartY = 0
     let selectedSkinIndex = 0
-    let selectHoldTimer = null
 
     function getSkinsForChar() {
       const charName = characters[selectedIndex]
@@ -105,23 +104,22 @@
         selectTouch = touch.identifier
         selectStartX = pos.x
         selectStartY = pos.y
-
-        // Start hold timer for unlock
-        if (locked) {
-          selectHoldTimer = setTimeout(() => {
-            locked = false
-            sendSelectMsg({ type: "unlock", char: characters[selectedIndex], skin: getSkinsForChar()[selectedSkinIndex] })
-            selectHoldTimer = null
-          }, 500)
-        }
       } else if (e.type === "touchend") {
-        // Cancel hold timer
-        if (selectHoldTimer) {
-          clearTimeout(selectHoldTimer)
-          selectHoldTimer = null
+        if (locked) {
+          // Swipe up to unlock
+          for (const t of e.changedTouches) {
+            if (t.identifier === selectTouch) {
+              const pos = transformTouch(t.clientX, t.clientY)
+              const dy = pos.y - selectStartY
+              if (dy < -40) {
+                locked = false
+                sendSelectMsg({ type: "unlock", char: characters[selectedIndex], skin: getSkinsForChar()[selectedSkinIndex] })
+              }
+              selectTouch = null
+            }
+          }
+          return
         }
-
-        if (locked) return
 
         for (const t of e.changedTouches) {
           if (t.identifier === selectTouch) {
@@ -350,24 +348,29 @@
       // Character name
       ctx.fillStyle = "white"
       ctx.font = `bold ${Math.min(h * 0.09, w * 0.05)}px system-ui`
-      ctx.textAlign = "left"
+      ctx.textAlign = locked ? "center" : "left"
       ctx.textBaseline = "middle"
-      ctx.fillText(charName.toUpperCase(), w * 0.03, h * 0.06)
+      ctx.fillText(charName.toUpperCase(), locked ? cx : w * 0.03, h * 0.06)
 
       // Skin name (if multiple skins)
       if (skins.length > 1) {
         ctx.fillStyle = "#64748b"
         ctx.font = `${Math.min(h * 0.05, w * 0.028)}px system-ui`
-        ctx.textAlign = "left"
-        ctx.fillText(skinName, w * 0.03, h * 0.12)
+        ctx.textAlign = locked ? "center" : "left"
+        ctx.fillText(skinName, locked ? cx : w * 0.03, h * 0.12)
       }
 
       // Instructions
       ctx.fillStyle = locked ? "#22c55e" : "#9ca3af"
-      ctx.font = `${Math.min(h * 0.04, w * 0.022)}px system-ui`
-      ctx.textAlign = "right"
-      const msg = locked ? "✓ LOCKED IN (hold to unlock)" : "← → character • ↑ ↓ skin • tap to lock"
-      ctx.fillText(msg, w - w * 0.03, h * 0.95)
+      if (locked) {
+        ctx.font = `${Math.min(h * 0.06, w * 0.035)}px system-ui`
+        ctx.textAlign = "center"
+        ctx.fillText("✓ LOCKED IN (swipe up to unlock)", cx, h * 0.95)
+      } else {
+        ctx.font = `${Math.min(h * 0.04, w * 0.022)}px system-ui`
+        ctx.textAlign = "right"
+        ctx.fillText("← → character • ↑ ↓ skin • tap to lock", w - w * 0.03, h * 0.95)
+      }
     }
 
     function drawGameControls(now) {
