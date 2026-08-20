@@ -15,19 +15,6 @@
       -webkit-user-select: none;
     }
     canvas { display: block; width: 100%; height: 100%; }
-
-    /* Force landscape: rotate canvas when in portrait */
-    @media (orientation: portrait) {
-      canvas {
-        transform: rotate(90deg);
-        transform-origin: top left;
-        position: absolute;
-        top: 0;
-        left: 100%;
-        width: 100vh;
-        height: 100vw;
-      }
-    }
   </style>
 </head>
 <body>
@@ -44,7 +31,7 @@
       isPortrait = window.innerHeight > window.innerWidth
     }
 
-    // Transform touch coords to canvas space when CSS-rotated
+    // Transform touch coords to logical landscape canvas space
     function transformTouch(clientX, clientY) {
       if (isPortrait) {
         return { x: clientY, y: window.innerWidth - clientX }
@@ -52,10 +39,14 @@
       return { x: clientX, y: clientY }
     }
 
+    // Logical landscape dimensions (used by all drawing/layout code)
+    function logicalWidth() { return isPortrait ? window.innerHeight : window.innerWidth }
+    function logicalHeight() { return isPortrait ? window.innerWidth : window.innerHeight }
+
     function resize() {
       updateOrientation()
-      canvas.width = isPortrait ? window.innerHeight : window.innerWidth
-      canvas.height = isPortrait ? window.innerWidth : window.innerHeight
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
     }
     window.addEventListener("resize", resize)
     resize()
@@ -164,7 +155,7 @@
     }
 
     // === GAME PHASE TOUCH ===
-    function isLeftHalf(x) { return x < canvas.width / 2 }
+    function isLeftHalf(x) { return x < logicalWidth() / 2 }
 
     function handleGameTouch(e) {
       if (e.type === "touchstart") {
@@ -217,9 +208,9 @@
     }
 
     function updateJoystick(cx, cy) {
-      const centerX = canvas.width * 0.22
-      const centerY = canvas.height * 0.5
-      const maxDist = Math.min(canvas.width, canvas.height) * 0.13
+      const centerX = logicalWidth() * 0.22
+      const centerY = logicalHeight() * 0.5
+      const maxDist = Math.min(logicalWidth(), logicalHeight()) * 0.13
       let dx = cx - centerX
       let dy = cy - centerY
       const dist = Math.hypot(dx, dy)
@@ -230,8 +221,8 @@
     }
 
     function spawnFloater(type) {
-      const gCx = canvas.width * 0.75
-      const gCy = canvas.height * 0.5
+      const gCx = logicalWidth() * 0.75
+      const gCy = logicalHeight() * 0.5
       const jitter = (Math.random() - 0.5) * 40
       let text, color
       switch (type) {
@@ -278,8 +269,15 @@
     function draw() {
       resize()
       const now = performance.now()
-      const w = canvas.width
-      const h = canvas.height
+      const w = logicalWidth()
+      const h = logicalHeight()
+
+      ctx.save()
+      if (isPortrait) {
+        // Rotate context so we draw in landscape within the portrait canvas
+        ctx.translate(canvas.width, 0)
+        ctx.rotate(Math.PI / 2)
+      }
 
       ctx.fillStyle = "#080b12"
       ctx.fillRect(0, 0, w, h)
@@ -289,19 +287,20 @@
       else if (phase === "playing") { checkHold(); drawGameControls(now) }
       else if (phase === "gameover") drawGameoverScreen()
 
+      ctx.restore()
       requestAnimationFrame(draw)
     }
 
     function drawLobby() {
       ctx.fillStyle = "#9ca3af"
-      ctx.font = `${canvas.height * 0.05}px system-ui`
+      ctx.font = `${logicalHeight() * 0.05}px system-ui`
       ctx.textAlign = "center"
       ctx.textBaseline = "middle"
-      ctx.fillText(status, canvas.width / 2, canvas.height / 2)
+      ctx.fillText(status, logicalWidth() / 2, logicalHeight() / 2)
     }
 
     function drawSelectScreen() {
-      const w = canvas.width, h = canvas.height
+      const w = logicalWidth(), h = logicalHeight()
       const cx = w / 2, cy = h * 0.48
 
       const charName = characters[selectedIndex] || "???"
@@ -370,7 +369,7 @@
     }
 
     function drawGameControls(now) {
-      const w = canvas.width, h = canvas.height
+      const w = logicalWidth(), h = logicalHeight()
 
       // Player number
       ctx.fillStyle = "white"
@@ -441,10 +440,10 @@
 
     function drawGameoverScreen() {
       ctx.fillStyle = "#9ca3af"
-      ctx.font = `${canvas.height * 0.06}px system-ui`
+      ctx.font = `${logicalHeight() * 0.06}px system-ui`
       ctx.textAlign = "center"
       ctx.textBaseline = "middle"
-      ctx.fillText("Waiting for next round...", canvas.width / 2, canvas.height / 2)
+      ctx.fillText("Waiting for next round...", logicalWidth() / 2, logicalHeight() / 2)
     }
 
     requestAnimationFrame(draw)
