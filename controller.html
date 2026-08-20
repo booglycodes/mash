@@ -350,15 +350,16 @@
       // Character name
       ctx.fillStyle = "white"
       ctx.font = `bold ${Math.min(h * 0.07, w * 0.04)}px system-ui`
-      ctx.textAlign = "center"
+      ctx.textAlign = "left"
       ctx.textBaseline = "middle"
-      ctx.fillText(charName.toUpperCase(), cx, h * 0.06)
+      ctx.fillText(charName.toUpperCase(), w * 0.03, h * 0.06)
 
       // Skin name (if multiple skins)
       if (skins.length > 1) {
         ctx.fillStyle = "#64748b"
         ctx.font = `${Math.min(h * 0.035, w * 0.02)}px system-ui`
-        ctx.fillText(skinName, cx, h * 0.12)
+        ctx.textAlign = "left"
+        ctx.fillText(skinName, w * 0.03, h * 0.12)
       }
 
       // Instructions
