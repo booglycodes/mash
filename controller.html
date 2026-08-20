@@ -301,7 +301,7 @@
 
     function drawSelectScreen() {
       const w = logicalWidth(), h = logicalHeight()
-      const cx = w / 2, cy = h * 0.52
+      const cx = w / 2, cy = h * 0.45
 
       const charName = characters[selectedIndex] || "???"
       const skins = getSkinsForChar()
@@ -309,7 +309,7 @@
 
       // Main character/skin image — constrain so it doesn't overlap name or instructions
       const img = charImages[skinName] || charImages[charName]
-      const imgSize = Math.min(w * 0.3, h * 0.5)
+      const imgSize = Math.min(w * 0.25, h * 0.45)
       if (img && img.complete) {
         ctx.drawImage(img, cx - imgSize / 2, cy - imgSize / 2, imgSize, imgSize)
       }
