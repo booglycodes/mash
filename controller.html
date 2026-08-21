@@ -73,6 +73,7 @@
     let gestureStart = null
     let gestureTriggered = false
     let holdActive = false
+    let swipeHeld = null // direction currently held after swipe ("up","down","left","right")
 
     // Floaters
     const floaters = []
@@ -179,6 +180,7 @@
             gestureStart = { x: pos.x, y: pos.y, time: performance.now() }
             gestureTriggered = false
             holdActive = false
+            swipeHeld = null
           }
         }
       } else if (e.type === "touchmove") {
@@ -191,8 +193,11 @@
             const dx = pos.x - gestureStart.x
             const dy = pos.y - gestureStart.y
             if (Math.hypot(dx, dy) > SWIPE_THRESHOLD) {
-              if (Math.abs(dx) > Math.abs(dy)) triggerGesture(dx > 0 ? "right" : "left")
-              else triggerGesture(dy > 0 ? "down" : "up")
+              const dir = Math.abs(dx) > Math.abs(dy)
+                ? (dx > 0 ? "right" : "left")
+                : (dy > 0 ? "down" : "up")
+              triggerGesture(dir, true) // true = held (finger still down)
+              swipeHeld = dir
               gestureTriggered = true
             }
           }
@@ -206,7 +211,12 @@
           } else if (touch.identifier === gestureTouch) {
             if (!gestureTriggered && gestureStart) {
               const elapsed = performance.now() - gestureStart.time
-              if (elapsed < TAP_TIME) triggerGesture("tap")
+              if (elapsed < TAP_TIME) triggerGesture("tap", false)
+            }
+            // Release held swipe button
+            if (swipeHeld) {
+              releaseGesture(swipeHeld)
+              swipeHeld = null
             }
             gestureTouch = null
             gestureStart = null
@@ -241,18 +251,30 @@
         case "down": text = gestureLabels.down || "↓"; color = "#3b82f6"; break
         case "left": text = gestureLabels.left || "←"; color = "#3b82f6"; break
         case "right": text = gestureLabels.right || "→"; color = "#3b82f6"; break
+        case "up_rel": text = "↑ REL"; color = "#f97316"; break
+        case "down_rel": text = "↓ REL"; color = "#f97316"; break
+        case "left_rel": text = "← REL"; color = "#f97316"; break
+        case "right_rel": text = "→ REL"; color = "#f97316"; break
         default: text = type; color = "#3b82f6"
       }
       floaters.push({ text, color, x: gCx + jitter, y: gCy + (Math.random() - 0.5) * 30, born: performance.now() })
     }
 
-    function triggerGesture(type) {
+    function triggerGesture(type, held) {
       spawnFloater(type)
       if (type === "tap") { input.jump = true; pendingClears.push("jump") }
-      else if (type === "up") { input.b0 = true; pendingClears.push("b0") }
-      else if (type === "left") { input.b1 = true; pendingClears.push("b1") }
-      else if (type === "right") { input.b2 = true; pendingClears.push("b2") }
-      else if (type === "down") { input.b3 = true; pendingClears.push("b3") }
+      else if (type === "up") { input.b0 = true; if (!held) pendingClears.push("b0") }
+      else if (type === "left") { input.b1 = true; if (!held) pendingClears.push("b1") }
+      else if (type === "right") { input.b2 = true; if (!held) pendingClears.push("b2") }
+      else if (type === "down") { input.b3 = true; if (!held) pendingClears.push("b3") }
+    }
+
+    function releaseGesture(dir) {
+      spawnFloater(dir + "_rel")
+      if (dir === "up") input.b0 = false
+      else if (dir === "left") input.b1 = false
+      else if (dir === "right") input.b2 = false
+      else if (dir === "down") input.b3 = false
     }
 
     function checkHold() {
