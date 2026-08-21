@@ -56,12 +56,11 @@
     let selectedIndex = 0
     let locked = false
     let status = "Connecting..."
-    let gestureLabels = { up: "ATK 1", left: "ATK 2", right: "ATK 3", down: "ATK 4", hold: "ATK 5" }
     let playerNum = 0
     let phoneGameoverStart = 0
 
     // === INPUT STATE (game phase) ===
-    let input = { dx: 0, dy: 0, jump: false, b0: false, b1: false, b2: false, b3: false, b4: false }
+    let input = { dx: 0, dy: 0, gesture: null, held: false }
     let joystickKnob = { x: 0, y: 0 }
     let joystickTouch = null
 
@@ -79,7 +78,6 @@
     const floaters = []
     const FLOAT_DURATION = 800
     const FLOAT_RISE = 60
-    let pendingClears = []
 
     // Character data (loaded from host via network)
     // charData = { trump: { trump: 'images/trump.png' }, faceman: { faceman: '...', faceman_shaman: '...' }, ... }
@@ -220,7 +218,7 @@
             }
             gestureTouch = null
             gestureStart = null
-            if (holdActive) { input.b4 = false; holdActive = false }
+            if (holdActive) { input.gesture = "hold_rel"; input.held = false; holdActive = false }
           }
         }
       }
@@ -245,43 +243,44 @@
       const jitter = (Math.random() - 0.5) * 40
       let text, color
       switch (type) {
-        case "tap": text = "JUMP"; color = "#22c55e"; break
-        case "hold": text = gestureLabels.hold || "ATK 5"; color = "#a855f7"; break
-        case "up": text = gestureLabels.up || "↑"; color = "#3b82f6"; break
-        case "down": text = gestureLabels.down || "↓"; color = "#3b82f6"; break
-        case "left": text = gestureLabels.left || "←"; color = "#3b82f6"; break
-        case "right": text = gestureLabels.right || "→"; color = "#3b82f6"; break
+        case "tap": text = "TAP"; color = "#22c55e"; break
+        case "hold": text = "HOLD"; color = "#a855f7"; break
+        case "up": text = "↑"; color = "#3b82f6"; break
+        case "down": text = "↓"; color = "#3b82f6"; break
+        case "left": text = "←"; color = "#3b82f6"; break
+        case "right": text = "→"; color = "#3b82f6"; break
+        case "up_hold": text = "↑ HOLD"; color = "#a855f7"; break
+        case "down_hold": text = "↓ HOLD"; color = "#a855f7"; break
+        case "left_hold": text = "← HOLD"; color = "#a855f7"; break
+        case "right_hold": text = "→ HOLD"; color = "#a855f7"; break
         case "up_rel": text = "↑ REL"; color = "#f97316"; break
         case "down_rel": text = "↓ REL"; color = "#f97316"; break
         case "left_rel": text = "← REL"; color = "#f97316"; break
         case "right_rel": text = "→ REL"; color = "#f97316"; break
+        case "hold_rel": text = "HOLD REL"; color = "#f97316"; break
         default: text = type; color = "#3b82f6"
       }
       floaters.push({ text, color, x: gCx + jitter, y: gCy + (Math.random() - 0.5) * 30, born: performance.now() })
     }
 
     function triggerGesture(type, held) {
-      spawnFloater(type)
-      if (type === "tap") { input.jump = true; pendingClears.push("jump") }
-      else if (type === "up") { input.b0 = true; if (!held) pendingClears.push("b0") }
-      else if (type === "left") { input.b1 = true; if (!held) pendingClears.push("b1") }
-      else if (type === "right") { input.b2 = true; if (!held) pendingClears.push("b2") }
-      else if (type === "down") { input.b3 = true; if (!held) pendingClears.push("b3") }
+      spawnFloater(held ? type + "_hold" : type)
+      input.gesture = type
+      input.held = !!held
     }
 
     function releaseGesture(dir) {
       spawnFloater(dir + "_rel")
-      if (dir === "up") input.b0 = false
-      else if (dir === "left") input.b1 = false
-      else if (dir === "right") input.b2 = false
-      else if (dir === "down") input.b3 = false
+      input.gesture = dir + "_rel"
+      input.held = false
     }
 
     function checkHold() {
       if (gestureTouch !== null && gestureStart && !gestureTriggered && !holdActive) {
         if (performance.now() - gestureStart.time > HOLD_TIME) {
           holdActive = true
-          input.b4 = true
+          input.gesture = "hold"
+          input.held = true
           spawnFloater("hold")
         }
       }
@@ -556,14 +555,13 @@
         }
         if (phase === "playing") {
           // Reset all input state so nothing is stuck from previous round
-          input = { dx: 0, dy: 0, jump: false, b0: false, b1: false, b2: false, b3: false, b4: false }
+          input = { dx: 0, dy: 0, gesture: null, held: false }
           joystickKnob = { x: 0, y: 0 }
           joystickTouch = null
           gestureTouch = null
           gestureStart = null
           gestureTriggered = false
           holdActive = false
-          pendingClears.length = 0
         }
         if (phase === "gameover") {
           phoneGameoverStart = performance.now()
@@ -571,7 +569,6 @@
       })
 
       receiveCharInfo((data) => {
-        if (data.labels) gestureLabels = data.labels
         if (data.phase) phase = data.phase
         if (data.playerNum) playerNum = data.playerNum
       })
@@ -603,8 +600,8 @@
       setInterval(() => {
         if (phase === "playing" && sendInput) {
           sendInput({ ...input })
-          for (const key of pendingClears) input[key] = false
-          pendingClears.length = 0
+          // Clear one-shot gestures (flicks and releases), keep held gestures
+          if (!input.held) input.gesture = null
         }
       }, 33)
     }
