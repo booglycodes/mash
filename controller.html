@@ -60,7 +60,7 @@
     let phoneGameoverStart = 0
 
     // === INPUT STATE (game phase) ===
-    let input = { dx: 0, dy: 0, gesture: null, held: false }
+    let input = { dx: 0, dy: 0, direction: null, action: null }
     let joystickKnob = { x: 0, y: 0 }
     let joystickTouch = null
 
@@ -68,11 +68,12 @@
     const SWIPE_THRESHOLD = 30
     const TAP_TIME = 200
     const HOLD_TIME = 300
+    const FLICK_TIME = 150 // max ms between swipe detection and release to count as flick
     let gestureTouch = null
     let gestureStart = null
     let gestureTriggered = false
+    let gestureSwipeTime = 0 // when the swipe was detected
     let holdActive = false
-    let swipeHeld = null // direction currently held after swipe ("up","down","left","right")
 
     // Floaters
     const floaters = []
@@ -177,8 +178,8 @@
             gestureTouch = touch.identifier
             gestureStart = { x: pos.x, y: pos.y, time: performance.now() }
             gestureTriggered = false
+            gestureSwipeTime = 0
             holdActive = false
-            swipeHeld = null
           }
         }
       } else if (e.type === "touchmove") {
@@ -194,9 +195,11 @@
               const dir = Math.abs(dx) > Math.abs(dy)
                 ? (dx > 0 ? "right" : "left")
                 : (dy > 0 ? "down" : "up")
-              triggerGesture(dir, true) // true = held (finger still down)
-              swipeHeld = dir
+              input.direction = dir
+              input.action = "hold"
+              gestureSwipeTime = performance.now()
               gestureTriggered = true
+              spawnFloater(dir + "_hold")
             }
           }
         }
@@ -209,16 +212,33 @@
           } else if (touch.identifier === gestureTouch) {
             if (!gestureTriggered && gestureStart) {
               const elapsed = performance.now() - gestureStart.time
-              if (elapsed < TAP_TIME) triggerGesture("tap", false)
-            }
-            // Release held swipe button
-            if (swipeHeld) {
-              releaseGesture(swipeHeld)
-              swipeHeld = null
+              if (elapsed < TAP_TIME) {
+                // No-direction tap
+                input.direction = null
+                input.action = "tap"
+                spawnFloater("tap")
+              } else if (holdActive) {
+                // Stationary hold released
+                input.direction = null
+                input.action = "release"
+                spawnFloater("hold_rel")
+              }
+            } else if (gestureTriggered) {
+              // Swiped — was it a quick flick or a held release?
+              const heldDuration = performance.now() - gestureSwipeTime
+              if (heldDuration < FLICK_TIME) {
+                // Flick: quick swipe and release
+                input.action = "tap"
+                spawnFloater(input.direction + "_tap")
+              } else {
+                // Held then released
+                input.action = "release"
+                spawnFloater(input.direction + "_rel")
+              }
             }
             gestureTouch = null
             gestureStart = null
-            if (holdActive) { input.gesture = "hold_rel"; input.held = false; holdActive = false }
+            holdActive = false
           }
         }
       }
@@ -253,6 +273,10 @@
         case "down_hold": text = "↓ HOLD"; color = "#a855f7"; break
         case "left_hold": text = "← HOLD"; color = "#a855f7"; break
         case "right_hold": text = "→ HOLD"; color = "#a855f7"; break
+        case "up_tap": text = "↑ TAP"; color = "#3b82f6"; break
+        case "down_tap": text = "↓ TAP"; color = "#3b82f6"; break
+        case "left_tap": text = "← TAP"; color = "#3b82f6"; break
+        case "right_tap": text = "→ TAP"; color = "#3b82f6"; break
         case "up_rel": text = "↑ REL"; color = "#f97316"; break
         case "down_rel": text = "↓ REL"; color = "#f97316"; break
         case "left_rel": text = "← REL"; color = "#f97316"; break
@@ -263,24 +287,12 @@
       floaters.push({ text, color, x: gCx + jitter, y: gCy + (Math.random() - 0.5) * 30, born: performance.now() })
     }
 
-    function triggerGesture(type, held) {
-      spawnFloater(held ? type + "_hold" : type)
-      input.gesture = type
-      input.held = !!held
-    }
-
-    function releaseGesture(dir) {
-      spawnFloater(dir + "_rel")
-      input.gesture = dir + "_rel"
-      input.held = false
-    }
-
     function checkHold() {
       if (gestureTouch !== null && gestureStart && !gestureTriggered && !holdActive) {
         if (performance.now() - gestureStart.time > HOLD_TIME) {
           holdActive = true
-          input.gesture = "hold"
-          input.held = true
+          input.direction = null
+          input.action = "hold"
           spawnFloater("hold")
         }
       }
@@ -555,7 +567,7 @@
         }
         if (phase === "playing") {
           // Reset all input state so nothing is stuck from previous round
-          input = { dx: 0, dy: 0, gesture: null, held: false }
+          input = { dx: 0, dy: 0, direction: null, action: null }
           joystickKnob = { x: 0, y: 0 }
           joystickTouch = null
           gestureTouch = null
@@ -600,8 +612,11 @@
       setInterval(() => {
         if (phase === "playing" && sendInput) {
           sendInput({ ...input })
-          // Clear one-shot gestures (flicks and releases), keep held gestures
-          if (!input.held) input.gesture = null
+          // Clear one-shot actions (tap, release), keep hold actions
+          if (input.action === "tap" || input.action === "release") {
+            input.action = null
+            input.direction = null
+          }
         }
       }, 33)
     }
