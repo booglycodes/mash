@@ -192,6 +192,7 @@
             initLobby()
 
             // Run physics + draw all objects (same as gameloop)
+            update_dt()
             handle_collisions()
             for (const obj of all_objects) {
                 Object.values(obj.components).forEach(c => { if (c.draw) c.draw() })

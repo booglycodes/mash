@@ -2,6 +2,11 @@ let all_objects = []
 let gravity_factor = 1
 const threshold = 0.9
 
+// Delta-time: dt is normalized so that 1.0 = one frame at 60fps (16.67ms)
+const TARGET_FRAME_MS = 1000 / 60
+let dt = 1
+let _lastPhysicsTime = performance.now()
+
 class Vector2 {
     constructor(x, y) {
         this.x = x
@@ -224,6 +229,14 @@ function handle_collisions() {
     }
 }
 
+function update_dt() {
+    const now = performance.now()
+    const elapsed = now - _lastPhysicsTime
+    _lastPhysicsTime = now
+    // Clamp dt to avoid spiral of death (e.g. tab was backgrounded)
+    dt = Math.min(elapsed / TARGET_FRAME_MS, 3)
+}
+
 function handle_gravity() {
     for (let i = 0; i < all_objects.length; i++) {
         // don't apply gravity to objects with infinite mass
@@ -235,13 +248,13 @@ function handle_gravity() {
             continue
         }
         let force = all_objects[i].physical_properties.gravity * all_objects[i].physical_properties.mass
-        all_objects[i].physical_properties.add_force(new Vector2(0, force * gravity_factor))
+        all_objects[i].physical_properties.add_force(new Vector2(0, force * gravity_factor * dt))
     } 
 }
 
 function handle_position_update() {
     for (let i = 0; i < all_objects.length; i++) {
-        all_objects[i].position.x += all_objects[i].physical_properties.velocity.x
-        all_objects[i].position.y += all_objects[i].physical_properties.velocity.y
+        all_objects[i].position.x += all_objects[i].physical_properties.velocity.x * dt
+        all_objects[i].position.y += all_objects[i].physical_properties.velocity.y * dt
     }
 }

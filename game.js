@@ -143,6 +143,7 @@ function drawImageScaled(img, ctx) {
 
 function gameloop() {
     if (!gameRunning || gamePhase !== PHASE_PLAYING) return
+    update_dt()
 
     let current_players = []
     for (let i = 0; i < all_objects.length; i++) {
