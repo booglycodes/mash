@@ -117,6 +117,32 @@
             }
         }
 
+        // FPS counter
+        let fpsLastTime = performance.now()
+        let fpsFrameCount = 0
+        let fpsDisplay = 0
+
+        function updateFps() {
+            fpsFrameCount++
+            const now = performance.now()
+            const elapsed = now - fpsLastTime
+            if (elapsed >= 500) {
+                fpsDisplay = Math.round(fpsFrameCount / (elapsed / 1000))
+                fpsFrameCount = 0
+                fpsLastTime = now
+            }
+        }
+
+        function drawFps() {
+            ctx.save()
+            ctx.fillStyle = "lime"
+            ctx.font = "bold 24px monospace"
+            ctx.textAlign = "left"
+            ctx.textBaseline = "top"
+            ctx.fillText(`FPS: ${fpsDisplay}  |  Objects: ${all_objects.length}`, 12, 12)
+            ctx.restore()
+        }
+
         window.addEventListener('load', async () => {
             const roomName = await initNetwork()
 
@@ -132,10 +158,12 @@
         })
 
         function hostRender() {
+            updateFps()
             checkGameoverTimeout()
 
             if (gamePhase === PHASE_PLAYING) {
                 // game.js handles rendering during play
+                drawFps()
                 requestAnimationFrame(hostRender)
                 return
             }
@@ -152,6 +180,7 @@
                 drawGameover()
             }
 
+            drawFps()
             requestAnimationFrame(hostRender)
         }
 
