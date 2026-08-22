@@ -2,8 +2,8 @@ let all_objects = []
 let gravity_factor = 1
 const threshold = 0.9
 
-// Delta-time: dt is normalized so that 1.0 = one frame at 60fps (16.67ms)
-const TARGET_FRAME_MS = 1000 / 60
+// Delta-time: dt is normalized so that 1.0 = one frame at 30fps (33.33ms)
+const TARGET_FRAME_MS = 1000 / 30
 let dt = 1
 let _lastPhysicsTime = performance.now()
 
