@@ -275,7 +275,7 @@ class PlayerControllerComponent {
         // Charging: only if this character has a holdswipe ability
         let nc = this.controller.nc
         let hasHoldswipe = this.gestureMapping.holdswipe !== undefined && this.gestureMapping.holdswipe >= 0
-        this.charging = hasHoldswipe && nc.touching && !this.controller._directionFired
+        this.charging = hasHoldswipe && this.controller.isCharging()
 
         // Slow down while charging
         if (this.charging) {
