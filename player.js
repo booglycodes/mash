@@ -95,20 +95,6 @@ class GestureController {
             this._moveDir = null
             this._holdFired = false
         }
-                this._gesture = { type: "tap", direction: null }
-            } else if (!quick && this._moved) {
-                // Long hold + moved → holdswipe
-                this._gesture = { type: "holdswipe", direction: this._moveDir }
-            } else {
-                // Long hold + no move → hold
-                this._gesture = { type: "hold", direction: null }
-            }
-
-            // Reset
-            this._touchFrames = 0
-            this._moved = false
-            this._moveDir = null
-        }
 
         this._wasTouching = touching
     }
