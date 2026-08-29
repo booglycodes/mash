@@ -179,7 +179,7 @@ class PlayerControllerComponent {
             this.gameobject.physical_properties.velocity = this.frozen_velocity
             return
         }
-        this.gameobject.physical_properties.add_force(this.gameobject.physical_properties.velocity.scale(-this.properties.friction * dt))
+        this.gameobject.physical_properties.add_force(this.gameobject.physical_properties.velocity.scale(-this.properties.friction))
         if (this.stun_time > 0) {
             this.stun_time -= dt
             return
@@ -197,11 +197,11 @@ class PlayerControllerComponent {
         }
 
         if (this.controller.x_axis() < -0.5) {
-            this.gameobject.physical_properties.add_force(new Vector2(-this.properties.accel * this.speed_factor * dt, 0))
+            this.gameobject.physical_properties.add_force(new Vector2(-this.properties.accel * this.speed_factor, 0))
             this.flip = false
         } 
         if (this.controller.x_axis() > 0.5) {
-            this.gameobject.physical_properties.add_force(new Vector2(this.properties.accel * this.speed_factor * dt, 0))
+            this.gameobject.physical_properties.add_force(new Vector2(this.properties.accel * this.speed_factor, 0))
             this.flip = true
         }
 

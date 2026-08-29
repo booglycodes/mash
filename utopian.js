@@ -91,7 +91,7 @@ class DroneControllerComponent {
     }
 
     update() {
-        this.gameobject.physical_properties.add_force(this.gameobject.physical_properties.velocity.scale(-this.friction * dt))
+        this.gameobject.physical_properties.add_force(this.gameobject.physical_properties.velocity.scale(-this.friction))
         if (this.target === null) {
             this.target = find_target_with_tag(this.gameobject, this.player, 'player')
             return

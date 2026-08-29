@@ -469,7 +469,7 @@ class FrictionComponent {
     }
 
     update() {
-        this.gameobject.physical_properties.add_force(this.gameobject.physical_properties.velocity.scale(-this.friction * dt))
+        this.gameobject.physical_properties.add_force(this.gameobject.physical_properties.velocity.scale(-this.friction))
     }
 }
 
