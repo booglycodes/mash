@@ -58,6 +58,7 @@
     let status = "Connecting..."
     let playerNum = 0
     let phoneGameoverStart = 0
+    let abilityLabels = {} // { up, down, left, right, hold, holdswipe }
 
     // === INPUT STATE (game phase) ===
     // Raw touch data — no gesture interpretation, game side decides what it means
@@ -462,6 +463,43 @@
         }
       }
       ctx.globalAlpha = 1
+
+      // Ability guide — subtle labels around the gesture area
+      const gCx = w * 0.75, gCy = h * 0.5
+      const spread = Math.min(w * 0.18, h * 0.32)
+      const labelSize = Math.round(h * 0.035)
+      ctx.font = `${labelSize}px system-ui`
+      ctx.textBaseline = "middle"
+      ctx.fillStyle = "#475569"
+
+      if (abilityLabels.up) {
+        ctx.textAlign = "center"
+        ctx.fillText("↑ " + abilityLabels.up, gCx, gCy - spread)
+      }
+      if (abilityLabels.down) {
+        ctx.textAlign = "center"
+        ctx.fillText("↓ " + abilityLabels.down, gCx, gCy + spread)
+      }
+      if (abilityLabels.left) {
+        ctx.textAlign = "right"
+        ctx.fillText(abilityLabels.left + " ←", gCx - spread * 0.7, gCy)
+      }
+      if (abilityLabels.right) {
+        ctx.textAlign = "left"
+        ctx.fillText("→ " + abilityLabels.right, gCx + spread * 0.7, gCy)
+      }
+      // Hold and holdswipe labels at bottom
+      const bottomY = gCy + spread + labelSize * 1.5
+      ctx.textAlign = "center"
+      ctx.fillStyle = "#374151"
+      ctx.font = `${Math.round(labelSize * 0.85)}px system-ui`
+      let hints = []
+      if (abilityLabels.hold) hints.push("hold: " + abilityLabels.hold)
+      if (abilityLabels.holdswipe) hints.push("hold+swipe: " + abilityLabels.holdswipe)
+      if (hints.length > 0) {
+        ctx.fillText(hints.join("  •  "), gCx, bottomY)
+      }
+      ctx.fillText("tap: JUMP", gCx, bottomY + labelSize)
     }
 
     function drawGameoverScreen() {
@@ -523,6 +561,7 @@
       receiveCharInfo((data) => {
         if (data.phase) phase = data.phase
         if (data.playerNum) playerNum = data.playerNum
+        if (data.labels) abilityLabels = data.labels
       })
 
       receiveCharList((data) => {
