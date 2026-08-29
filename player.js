@@ -23,6 +23,7 @@ class GestureController {
         this._wasTouching = false
         this._moved = false         // did finger move past threshold during this touch
         this._moveDir = null        // direction of movement
+        this._holdFired = false     // did we fire the hold gesture this touch
     }
 
     x_axis() { return this.nc.axes().x }
@@ -50,6 +51,12 @@ class GestureController {
         if (touching) {
             this._touchFrames += dt
 
+            // Fire hold gesture once when hold threshold is crossed (mid-touch)
+            if (!this._holdFired && this._touchFrames >= this.TAP_TIME) {
+                this._holdFired = true
+                this._gesture = { type: "hold", direction: null }
+            }
+
             // Track if finger has moved past threshold
             if (!this._moved) {
                 const dx = this.nc.rx - this.nc.startX
@@ -75,6 +82,19 @@ class GestureController {
                 this._gesture = { type: "swipe", direction: this._moveDir }
             } else if (quick && !this._moved) {
                 // Quick tap → jump
+                this._gesture = { type: "tap", direction: null }
+            } else if (!quick && this._moved) {
+                // Long hold + moved → holdswipe
+                this._gesture = { type: "holdswipe", direction: this._moveDir }
+            }
+            // Long hold + no move + release = nothing (hold already fired mid-touch)
+
+            // Reset
+            this._touchFrames = 0
+            this._moved = false
+            this._moveDir = null
+            this._holdFired = false
+        }
                 this._gesture = { type: "tap", direction: null }
             } else if (!quick && this._moved) {
                 // Long hold + moved → holdswipe
