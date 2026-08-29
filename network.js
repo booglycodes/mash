@@ -203,7 +203,8 @@ function transitionTo(phase) {
 }
 
 function checkAllLocked() {
-  if (connectedPeers.length < 2) return
+  const testMode = new URLSearchParams(window.location.search).get('test') === 'true'
+  if (connectedPeers.length < 2 && !testMode) return
   if (connectedPeers.every(p => p.locked)) {
     startGame()
   }
