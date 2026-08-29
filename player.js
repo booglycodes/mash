@@ -168,6 +168,7 @@ class PlayerControllerComponent {
         this.stun_time = 0
         this.tint_time = 0
         this.tint_color = null
+        this.charging = false
     }
 
     draw() {
@@ -220,6 +221,21 @@ class PlayerControllerComponent {
             )
         }
 
+        // Charging glow
+        if (this.charging) {
+            let pulse = 0.3 + 0.2 * Math.sin(performance.now() / 80)
+            let dim = this.gameobject.physical_properties.dimensions
+            let cx = this.gameobject.position.x
+            let cy = this.gameobject.position.y
+            let radius = Math.max(dim.x, dim.y) * 0.7
+            ctx.save()
+            ctx.beginPath()
+            ctx.arc(cx, cy, radius, 0, Math.PI * 2)
+            ctx.fillStyle = 'rgba(100, 180, 255, ' + pulse + ')'
+            ctx.fill()
+            ctx.restore()
+        }
+
         let circleX = Math.min(Math.max(this.gameobject.position.x, 0), 2000)
         let circleY = Math.min(Math.max(this.gameobject.position.y, 0), 1000)
         if (circleX !== this.gameobject.position.x || circleY !==  this.gameobject.position.y) {
@@ -243,6 +259,19 @@ class PlayerControllerComponent {
             return
         }
 
+        // Interpret raw touch data into gestures
+        this.controller.interpret()
+
+        // Charging: finger is down and hasn't fired a directional ability yet
+        let nc = this.controller.nc
+        this.charging = nc.touching && !this.controller._directionFired
+
+        // Slow down while charging
+        if (this.charging) {
+            this.gameobject.physical_properties.velocity.x *= 0.85
+            this.gameobject.physical_properties.velocity.y *= 0.9
+        }
+
         this.jumped = false
         if (this.controller.jump() && !this.jump_was_pressed && this.jumps_left > 0) {
             this.gameobject.physical_properties.velocity.y = this.properties.jump_speed
@@ -262,9 +291,6 @@ class PlayerControllerComponent {
             this.gameobject.physical_properties.add_force(new Vector2(this.properties.accel * this.speed_factor, 0))
             this.flip = true
         }
-
-        // Interpret raw touch data into gestures
-        this.controller.interpret()
 
         let gesture = this.controller.getGesture()
         if (gesture) {
