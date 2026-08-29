@@ -241,7 +241,7 @@ function create_shrek(gamepad, position, ability_draw_location, skin_name, gestu
             ), 
             stats : new PlayerStatsComponent(300),
             shrekdown : new ShrekDownComponent(-20, 35, -1000, 3),
-            shrekgrab : new GrabComponent(new Vector2(0, -0.8), new Vector2(0, -0.5), 120, shrek_grab_ability, [
+            shrekgrab : new GrabComponent(new Vector2(0, -0.8), new Vector2(0, -0.5), 240, shrek_grab_ability, [
                 arm_donkey
             ], [])
         }
