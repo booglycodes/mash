@@ -125,7 +125,7 @@ function fire_projectile(player, position, velocity, time_alive) {
         undefined,
         [
             new Effect(
-                [damage(-1.5)],
+                [damage_over_time(-1.5)],
                 filter_by_can_damage()
             )
         ]

@@ -106,7 +106,7 @@ class AnimatedImageComponent {
             this.frame_width,
             this.frame
         )
-        this.time++
+        this.time += dt
     }
 }
 

@@ -85,11 +85,11 @@ class DamageController {
     }
 
     update() {
-        if (this.time == 0) {
+        if (this.time > 0 && this.time - dt <= 0) {
             this.gameobject.components.stats.output_damage_scale = 1
-            this.time--
+            this.time = -1
         } else if (this.time > 0) {
-            this.time--
+            this.time -= dt
         }
     }
 }
@@ -109,7 +109,7 @@ class ItemSpawner {
                 spawn_banana(this.gameobject)
             }
         }
-        this.time++
+        this.time += dt
     }
 }
 

@@ -134,10 +134,10 @@ function free_weed_zone(player) {
         undefined,
         [
             new Effect(
-                [damage(-0.2)],
+                [damage_over_time(-0.2)],
                 and_filters([filter_in_radius(range), filter_has_health()])
             ),
-            new Effect([force_in_vel_dir(-0.3)], filter_in_radius(range)),
+            new Effect([force_in_vel_dir_over_time(-0.3)], filter_in_radius(range)),
             new Effect(
                 [delete_other()],
                 and_filters([
@@ -242,7 +242,7 @@ function do_drugs(player) {
         }, 
         [
             new Effect(
-                [damage(-0.5), knockback_angled(1, 20)],
+                [damage_over_time(-0.5), knockback_angled(1, 20)],
                 filter_by_tag('player')
             ),
             new Effect(

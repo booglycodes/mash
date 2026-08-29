@@ -224,4 +224,15 @@ function gameloop() {
         let draw_loc = ability_draw_locations[i % ability_draw_locations.length].add(new Vector2(0, 50))
         drawText(players[i].stocks + '', 'white', '50px serif', draw_loc.x, draw_loc.y, 'left')
     }
+
+    // Draw FPS and object count overlay
+    if (typeof window._gameFpsDisplay !== 'undefined') {
+        ctx.save()
+        ctx.fillStyle = "lime"
+        ctx.font = "bold 24px monospace"
+        ctx.textAlign = "left"
+        ctx.textBaseline = "top"
+        ctx.fillText("FPS: " + window._gameFpsDisplay + "  |  Objects: " + all_objects.length, 12, 12)
+        ctx.restore()
+    }
 }

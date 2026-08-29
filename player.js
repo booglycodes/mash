@@ -60,8 +60,8 @@ class Ability {
         return this.current_cooldown >= this.cooldown && this.current_multi_use_cooldown >= this.multi_use_cooldown
     }
     update() {
-        this.current_cooldown++
-        this.current_multi_use_cooldown++
+        this.current_cooldown += dt
+        this.current_multi_use_cooldown += dt
     }
     run(player) {
         if (this.num_used >= this.num_uses - 1) {
@@ -177,22 +177,22 @@ class PlayerControllerComponent {
         let circleY = Math.min(Math.max(this.gameobject.position.y, 0), 1000)
         if (circleX !== this.gameobject.position.x || circleY !==  this.gameobject.position.y) {
             drawCircle(circleX, circleY, 20, 'white', 'white', 2)
-            this.gameobject.components.stats.apply_damage(-out_of_bounds_dpf * this.gameobject.components.health.max_health)
+            this.gameobject.components.stats.apply_damage(-out_of_bounds_dpf * this.gameobject.components.health.max_health * dt)
         }
     }
 
     update() {
         if (this.tint_time > 0) {
-            this.tint_time--
+            this.tint_time -= dt
         }
         if (this.freeze_time > 0) {
-            this.freeze_time--
+            this.freeze_time -= dt
             this.gameobject.physical_properties.velocity = this.frozen_velocity
             return
         }
-        this.gameobject.physical_properties.add_force(this.gameobject.physical_properties.velocity.scale(-this.properties.friction))
+        this.gameobject.physical_properties.add_force(this.gameobject.physical_properties.velocity.scale(-this.properties.friction * dt))
         if (this.stun_time > 0) {
-            this.stun_time--
+            this.stun_time -= dt
             return
         }
 
@@ -208,11 +208,11 @@ class PlayerControllerComponent {
         }
 
         if (this.controller.x_axis() < -0.5) {
-            this.gameobject.physical_properties.add_force(new Vector2(-this.properties.accel * this.speed_factor, 0))
+            this.gameobject.physical_properties.add_force(new Vector2(-this.properties.accel * this.speed_factor * dt, 0))
             this.flip = false
         } 
         if (this.controller.x_axis() > 0.5) {
-            this.gameobject.physical_properties.add_force(new Vector2(this.properties.accel * this.speed_factor, 0))
+            this.gameobject.physical_properties.add_force(new Vector2(this.properties.accel * this.speed_factor * dt, 0))
             this.flip = true
         }
 

@@ -26,7 +26,7 @@ class EnergyComponent {
             this.energy += this.energy_gain
             this.frame = 0
         }
-        this.frame++
+        this.frame += dt
     }
 }
 
@@ -52,7 +52,7 @@ class RotatingLightningComponent {
 
     update() {
         for (let i = 0; i < this.num_lightning; i++) {
-            this.gameobject.components['lightning_' + i].start_angle += this.lightning_rotation
+            this.gameobject.components['lightning_' + i].start_angle += this.lightning_rotation * dt
         }
     }
 }
@@ -70,7 +70,7 @@ class GeneratorComponent {
             this.player.components.energy.energy += this.energy_gain
             this.frame = 0
         }
-        this.frame++
+        this.frame += dt
     }
 
     should_delete() {
@@ -91,7 +91,7 @@ class DroneControllerComponent {
     }
 
     update() {
-        this.gameobject.physical_properties.add_force(this.gameobject.physical_properties.velocity.scale(-this.friction))
+        this.gameobject.physical_properties.add_force(this.gameobject.physical_properties.velocity.scale(-this.friction * dt))
         if (this.target === null) {
             this.target = find_target_with_tag(this.gameobject, this.player, 'player')
             return
@@ -134,7 +134,7 @@ class TurretControllerComponent {
             let bullet_velocity = this.dir.scale(this.turret_bullet_speed)
             all_objects.push(this.create_bullet(bullet_spawn_posn, bullet_velocity))
         }
-        this.frame++
+        this.frame += dt
     }
 
     should_delete() {

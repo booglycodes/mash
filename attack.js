@@ -37,7 +37,7 @@ class Attack {
         if (this.on_update !== undefined) {
             this.on_update(this)
         }
-        this.frame++
+        this.frame += dt
     }
 
     should_delete() {
@@ -62,7 +62,7 @@ class TimedDelete {
     }
 
     update() {
-        this.frame++
+        this.frame += dt
     }
 
     should_delete() {
@@ -151,9 +151,27 @@ function damage(damage) {
     }
 }
 
+function damage_over_time(dmg_per_frame) {
+    return (attack, obj) => {
+        let scaled = dmg_per_frame * dt
+        if (obj.components.stats !== undefined) {
+            obj.components.stats.apply_damage(attack.player.components.stats.calculate_damage(scaled))
+        } else if (obj.components.health !== undefined) {
+            obj.components.health.apply_damage(attack.player.components.stats.calculate_damage(scaled))
+        }
+    }
+}
+
 function force_in_vel_dir(factor) {
     return (_, obj) => {
         let force = obj.physical_properties.velocity.scale(factor * obj.physical_properties.mass)
+        obj.physical_properties.add_force(force)
+    }
+}
+
+function force_in_vel_dir_over_time(factor) {
+    return (_, obj) => {
+        let force = obj.physical_properties.velocity.scale(factor * dt * obj.physical_properties.mass)
         obj.physical_properties.add_force(force)
     }
 }
@@ -290,7 +308,7 @@ class LightningComponent {
 
     draw() {
         if (this.frame >= this.time_delay) {
-            let damage_func = damage(this.damage)
+            let damage_func = damage_over_time(this.damage)
             ctx.beginPath()
             ctx.strokeStyle = this.color
             ctx.lineWidth = 2
@@ -315,7 +333,7 @@ class LightningComponent {
             }
             ctx.stroke()
         }
-        this.frame++
+        this.frame += dt
     }
 }
 
@@ -395,7 +413,7 @@ class GrabComponent {
             }
             this.target.position = this.gameobject.position.add(sum)
         }
-        this.frame++
+        this.frame += dt
     }
 
 }
@@ -431,12 +449,12 @@ class Timer {
     }
 
     finished() {
-        return this.current_time == 0
+        return this.current_time <= 0
     }
 
     update() {
         if (this.current_time > 0) {
-            this.current_time--
+            this.current_time -= dt
         }
     }
 
@@ -451,7 +469,7 @@ class FrictionComponent {
     }
 
     update() {
-        this.gameobject.physical_properties.add_force(this.gameobject.physical_properties.velocity.scale(-this.friction))
+        this.gameobject.physical_properties.add_force(this.gameobject.physical_properties.velocity.scale(-this.friction * dt))
     }
 }
 

@@ -20,7 +20,7 @@ function faceman_bite(player) {
         [
             new Effect(
                 [
-                    damage(-0.5),
+                    damage_over_time(-0.5),
                     knockback_angled(1, 10),
                 ],
                 filter_by_can_damage(),
@@ -49,11 +49,11 @@ function faceman_bite(player) {
             new Effect(
                 [
                     (attack, _) => {
-                        attack.player.components.stats.apply_damage(0.1)
+                        attack.player.components.stats.apply_damage(0.1 * dt)
                         if (attack.player.physical_properties.mass < mass_cap) {
-                            attack.player.physical_properties.dimensions.x += 1
-                            attack.player.physical_properties.dimensions.y += 1
-                            attack.player.physical_properties.mass += 1
+                            attack.player.physical_properties.dimensions.x += dt
+                            attack.player.physical_properties.dimensions.y += dt
+                            attack.player.physical_properties.mass += dt
                         }
                     }
                 ],

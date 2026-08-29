@@ -51,7 +51,7 @@ class ShrekDownComponent {
         } else {
             this.gameobject.physical_properties.velocity.x = 0
         }
-        this.frame++
+        this.frame += dt
     }
 
     collision(obj, coll) {

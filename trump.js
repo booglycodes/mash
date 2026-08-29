@@ -25,7 +25,7 @@ class ApprovalComponent {
     update() {
         this.gameobject.components.stats.output_damage_scale = this.approval + this.base_dmg
         if (this.approval > 0) {
-            this.approval += this.approval_change_rate * (this.approval * this.approval)
+            this.approval += this.approval_change_rate * (this.approval * this.approval) * dt
         }  else if (this.approval < 0) {
             this.approval = 0
         }
