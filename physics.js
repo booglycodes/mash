@@ -248,7 +248,7 @@ function handle_gravity() {
             continue
         }
         let force = all_objects[i].physical_properties.gravity * all_objects[i].physical_properties.mass
-        all_objects[i].physical_properties.add_force(new Vector2(0, force * gravity_factor * dt))
+        all_objects[i].physical_properties.add_force(new Vector2(0, force * gravity_factor))
     } 
 }
 
