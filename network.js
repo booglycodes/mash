@@ -54,8 +54,8 @@ const CHARACTER_MAPPINGS = {
     labels: { up: "LIGHTNING", left: "FIRE", right: "ICE", down: "HONOUR SLASH", hold: "PHYSICS HW" }
   },
   utopian: {
-    up: 3, left: 1, right: 2, down: 0, hold: 4,
-    labels: { up: "TURRET", left: "GENERATOR", right: "DRONES", down: "SHOCK", hold: "TELEPORT" }
+    up: 3, left: 1, right: 2, down: 0, hold: -1, holdswipe: 4,
+    labels: { up: "TURRET", left: "GENERATOR", right: "DRONES", down: "SHOCK", hold: "", holdswipe: "TELEPORT" }
   },
   shrek: {
     up: 2, left: 3, right: 4, down: 0, hold: 1,
@@ -68,31 +68,39 @@ const CHARACTER_MAPPINGS = {
 }
 
 // === NETWORK CONTROL ===
-// Stores raw gesture input from controller.html:
-//   { dx, dy, direction: "up"|"left"|"right"|"down"|null, action: "tap"|"hold"|"release"|null }
+// Stores raw touch data from controller.html:
+//   { dx, dy, touching, rx, ry, startX, startY, startTime }
 class NetworkControl {
   constructor() {
     this._axes = new Vector2(0, 0)
-    this._direction = null   // "up", "left", "right", "down", or null
-    this._action = null      // "tap", "hold", "release", or null
+    // Raw right-side touch state
+    this.touching = false
+    this.rx = 0
+    this.ry = 0
+    this.startX = 0
+    this.startY = 0
+    this.startTime = 0
+    this._prevTouching = false
   }
 
   updateInput(data) {
+    this._prevTouching = this.touching
     this._axes = new Vector2(data.dx || 0, data.dy || 0)
-    this._direction = data.direction || null
-    this._action = data.action || null
+    this.touching = !!data.touching
+    this.rx = data.rx || 0
+    this.ry = data.ry || 0
+    this.startX = data.startX || 0
+    this.startY = data.startY || 0
+    this.startTime = data.startTime || 0
   }
 
   axes() { return this._axes }
 
-  // No-direction tap = jump
-  jump() { return this._action === "tap" && this._direction === null }
+  // Touch just started this frame
+  justTouched() { return this.touching && !this._prevTouching }
 
-  // Returns current gesture: { direction, action } or null if idle
-  getGesture() {
-    if (!this._action) return null
-    return { direction: this._direction, action: this._action }
-  }
+  // Touch just released this frame
+  justReleased() { return !this.touching && this._prevTouching }
 }
 
 // === ROOM MANAGEMENT ===
@@ -205,8 +213,11 @@ function startGame() {
   // Reset all control state so nothing is stuck from previous round
   for (const ctrl of networkControls.values()) {
     ctrl._axes = new Vector2(0, 0)
-    ctrl._direction = null
-    ctrl._action = null
+    ctrl.touching = false
+    ctrl._prevTouching = false
+    ctrl.rx = 0; ctrl.ry = 0
+    ctrl.startX = 0; ctrl.startY = 0
+    ctrl.startTime = 0
   }
 
   // Send labels and player number to each phone

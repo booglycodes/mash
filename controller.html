@@ -60,25 +60,21 @@
     let phoneGameoverStart = 0
 
     // === INPUT STATE (game phase) ===
-    let input = { dx: 0, dy: 0, direction: null, action: null }
+    // Raw touch data — no gesture interpretation, game side decides what it means
+    let input = {
+      dx: 0, dy: 0,                         // joystick axes (-1 to 1)
+      touching: false,                       // right side currently touched
+      rx: 0, ry: 0,                          // current touch position (normalized 0-1 within right half)
+      startX: 0, startY: 0,                  // where the touch began (normalized)
+      startTime: 0                           // when the touch began (ms timestamp)
+    }
     let joystickKnob = { x: 0, y: 0 }
     let joystickTouch = null
+    let rightTouch = null
 
-    // Gesture state
-    const SWIPE_THRESHOLD = 30
-    const TAP_TIME = 200
-    const HOLD_TIME = 300
-    const FLICK_TIME = 150 // max ms between swipe detection and release to count as flick
-    let gestureTouch = null
-    let gestureStart = null
-    let gestureTriggered = false
-    let gestureSwipeTime = 0 // when the swipe was detected
-    let holdActive = false
-
-    // Floaters
-    const floaters = []
-    const FLOAT_DURATION = 800
-    const FLOAT_RISE = 60
+    // Touch trails — dot at start, line+dot at end, fades after release
+    const touchTrails = []
+    const TRAIL_FADE_DURATION = 400
 
     // Character data (loaded from host via network)
     // charData = { trump: { trump: 'images/trump.png' }, faceman: { faceman: '...', faceman_shaman: '...' }, ... }
@@ -174,12 +170,16 @@
           if (isLeftHalf(pos.x) && joystickTouch === null) {
             joystickTouch = touch.identifier
             updateJoystick(pos.x, pos.y)
-          } else if (!isLeftHalf(pos.x) && gestureTouch === null) {
-            gestureTouch = touch.identifier
-            gestureStart = { x: pos.x, y: pos.y, time: performance.now() }
-            gestureTriggered = false
-            gestureSwipeTime = 0
-            holdActive = false
+          } else if (!isLeftHalf(pos.x) && rightTouch === null) {
+            rightTouch = touch.identifier
+            const nx = (pos.x - logicalWidth() / 2) / (logicalWidth() / 2)
+            const ny = pos.y / logicalHeight()
+            input.touching = true
+            input.rx = nx; input.ry = ny
+            input.startX = nx; input.startY = ny
+            input.startTime = performance.now()
+            // Start a new trail
+            touchTrails.push({ startX: pos.x, startY: pos.y, endX: pos.x, endY: pos.y, born: 0, released: false })
           }
         }
       } else if (e.type === "touchmove") {
@@ -188,18 +188,14 @@
           const pos = transformTouch(touch.clientX, touch.clientY)
           if (touch.identifier === joystickTouch) {
             updateJoystick(pos.x, pos.y)
-          } else if (touch.identifier === gestureTouch && gestureStart && !gestureTriggered) {
-            const dx = pos.x - gestureStart.x
-            const dy = pos.y - gestureStart.y
-            if (Math.hypot(dx, dy) > SWIPE_THRESHOLD) {
-              const dir = Math.abs(dx) > Math.abs(dy)
-                ? (dx > 0 ? "right" : "left")
-                : (dy > 0 ? "down" : "up")
-              input.direction = dir
-              input.action = "hold"
-              gestureSwipeTime = performance.now()
-              gestureTriggered = true
-              spawnFloater(dir + "_hold")
+          } else if (touch.identifier === rightTouch) {
+            const nx = (pos.x - logicalWidth() / 2) / (logicalWidth() / 2)
+            const ny = pos.y / logicalHeight()
+            input.rx = nx; input.ry = ny
+            // Update active trail endpoint
+            const active = touchTrails[touchTrails.length - 1]
+            if (active && !active.released) {
+              active.endX = pos.x; active.endY = pos.y
             }
           }
         }
@@ -209,36 +205,15 @@
             joystickTouch = null
             joystickKnob = { x: 0, y: 0 }
             input.dx = 0; input.dy = 0
-          } else if (touch.identifier === gestureTouch) {
-            if (!gestureTriggered && gestureStart) {
-              const elapsed = performance.now() - gestureStart.time
-              if (elapsed < TAP_TIME) {
-                // No-direction tap
-                input.direction = null
-                input.action = "tap"
-                spawnFloater("tap")
-              } else if (holdActive) {
-                // Stationary hold released
-                input.direction = null
-                input.action = "release"
-                spawnFloater("hold_rel")
-              }
-            } else if (gestureTriggered) {
-              // Swiped — was it a quick flick or a held release?
-              const heldDuration = performance.now() - gestureSwipeTime
-              if (heldDuration < FLICK_TIME) {
-                // Flick: quick swipe and release
-                input.action = "tap"
-                spawnFloater(input.direction + "_tap")
-              } else {
-                // Held then released
-                input.action = "release"
-                spawnFloater(input.direction + "_rel")
-              }
+          } else if (touch.identifier === rightTouch) {
+            input.touching = false
+            rightTouch = null
+            // Mark trail as released so it fades out
+            const active = touchTrails[touchTrails.length - 1]
+            if (active && !active.released) {
+              active.released = true
+              active.born = performance.now()
             }
-            gestureTouch = null
-            gestureStart = null
-            holdActive = false
           }
         }
       }
@@ -257,46 +232,7 @@
       input.dy = dy / maxDist
     }
 
-    function spawnFloater(type) {
-      const gCx = logicalWidth() * 0.75
-      const gCy = logicalHeight() * 0.5
-      const jitter = (Math.random() - 0.5) * 40
-      let text, color
-      switch (type) {
-        case "tap": text = "TAP"; color = "#22c55e"; break
-        case "hold": text = "HOLD"; color = "#a855f7"; break
-        case "up": text = "↑"; color = "#3b82f6"; break
-        case "down": text = "↓"; color = "#3b82f6"; break
-        case "left": text = "←"; color = "#3b82f6"; break
-        case "right": text = "→"; color = "#3b82f6"; break
-        case "up_hold": text = "↑ HOLD"; color = "#a855f7"; break
-        case "down_hold": text = "↓ HOLD"; color = "#a855f7"; break
-        case "left_hold": text = "← HOLD"; color = "#a855f7"; break
-        case "right_hold": text = "→ HOLD"; color = "#a855f7"; break
-        case "up_tap": text = "↑ TAP"; color = "#3b82f6"; break
-        case "down_tap": text = "↓ TAP"; color = "#3b82f6"; break
-        case "left_tap": text = "← TAP"; color = "#3b82f6"; break
-        case "right_tap": text = "→ TAP"; color = "#3b82f6"; break
-        case "up_rel": text = "↑ REL"; color = "#f97316"; break
-        case "down_rel": text = "↓ REL"; color = "#f97316"; break
-        case "left_rel": text = "← REL"; color = "#f97316"; break
-        case "right_rel": text = "→ REL"; color = "#f97316"; break
-        case "hold_rel": text = "HOLD REL"; color = "#f97316"; break
-        default: text = type; color = "#3b82f6"
-      }
-      floaters.push({ text, color, x: gCx + jitter, y: gCy + (Math.random() - 0.5) * 30, born: performance.now() })
-    }
-
-    function checkHold() {
-      if (gestureTouch !== null && gestureStart && !gestureTriggered && !holdActive) {
-        if (performance.now() - gestureStart.time > HOLD_TIME) {
-          holdActive = true
-          input.direction = null
-          input.action = "hold"
-          spawnFloater("hold")
-        }
-      }
-    }
+    // (touch trail rendering is in drawGameControls)
 
     // === UNIFIED TOUCH DISPATCHER ===
     for (const evt of ["touchstart", "touchmove", "touchend", "touchcancel"]) {
@@ -326,7 +262,7 @@
 
       if (phase === "lobby") drawLobby()
       else if (phase === "select") drawSelectScreen()
-      else if (phase === "playing") { checkHold(); drawGameControls(now) }
+      else if (phase === "playing") { drawGameControls(now) }
       else if (phase === "gameover") drawGameoverScreen()
 
       ctx.restore()
@@ -490,35 +426,42 @@
         ctx.shadowColor = "#3b82f6"; ctx.shadowBlur = 20; ctx.fill(); ctx.shadowBlur = 0
       }
 
-      // Gesture area hint
-      const gCx = w * 0.75, gCy = h * 0.5
-      ctx.fillStyle = "#1e293b22"
-      ctx.beginPath()
-      ctx.arc(gCx, gCy, Math.min(w * 0.2, h * 0.35), 0, Math.PI * 2)
-      ctx.fill()
+      // Touch trails — draw active + fading
+      const dotR = 8
+      for (let i = touchTrails.length - 1; i >= 0; i--) {
+        const t = touchTrails[i]
+        let alpha = 1
+        if (t.released) {
+          const age = now - t.born
+          if (age > TRAIL_FADE_DURATION) { touchTrails.splice(i, 1); continue }
+          alpha = 1 - age / TRAIL_FADE_DURATION
+        }
+        ctx.globalAlpha = alpha
 
-      ctx.fillStyle = "#334155"
-      ctx.font = `${h * 0.025}px system-ui`
-      ctx.textAlign = "center"
-      ctx.textBaseline = "middle"
-      ctx.fillText("swipe / tap", gCx, gCy + Math.min(w * 0.2, h * 0.35) + h * 0.04)
+        // Start dot
+        ctx.beginPath()
+        ctx.arc(t.startX, t.startY, dotR, 0, Math.PI * 2)
+        ctx.fillStyle = "#3b82f6"
+        ctx.fill()
 
-      // Floaters
-      const fontSize = Math.round(h * 0.08)
-      ctx.font = `bold ${fontSize}px system-ui`
-      ctx.textAlign = "center"
-      ctx.textBaseline = "middle"
+        // Line from start to end (if moved)
+        const dist = Math.hypot(t.endX - t.startX, t.endY - t.startY)
+        if (dist > 5) {
+          ctx.beginPath()
+          ctx.moveTo(t.startX, t.startY)
+          ctx.lineTo(t.endX, t.endY)
+          ctx.strokeStyle = "#3b82f6"
+          ctx.lineWidth = 3
+          ctx.stroke()
 
-      for (let i = floaters.length - 1; i >= 0; i--) {
-        const f = floaters[i]
-        const age = now - f.born
-        if (age > FLOAT_DURATION) { floaters.splice(i, 1); continue }
-        const t = age / FLOAT_DURATION
-        ctx.globalAlpha = 1 - t
-        ctx.fillStyle = f.color
-        ctx.fillText(f.text, f.x, f.y - t * FLOAT_RISE)
-        ctx.globalAlpha = 1
+          // End dot
+          ctx.beginPath()
+          ctx.arc(t.endX, t.endY, dotR * 1.2, 0, Math.PI * 2)
+          ctx.fillStyle = "#22c55e"
+          ctx.fill()
+        }
       }
+      ctx.globalAlpha = 1
     }
 
     function drawGameoverScreen() {
@@ -567,13 +510,10 @@
         }
         if (phase === "playing") {
           // Reset all input state so nothing is stuck from previous round
-          input = { dx: 0, dy: 0, direction: null, action: null }
+          input = { dx: 0, dy: 0, touching: false, rx: 0, ry: 0, startX: 0, startY: 0, startTime: 0 }
           joystickKnob = { x: 0, y: 0 }
           joystickTouch = null
-          gestureTouch = null
-          gestureStart = null
-          gestureTriggered = false
-          holdActive = false
+          rightTouch = null
         }
         if (phase === "gameover") {
           phoneGameoverStart = performance.now()
@@ -608,15 +548,10 @@
       room.onPeerJoin(() => { status = "Connected ✓" })
       room.onPeerLeave(() => { status = "Host disconnected" })
 
-      // Send game input at 30Hz
+      // Send raw touch state at 30Hz
       setInterval(() => {
         if (phase === "playing" && sendInput) {
           sendInput({ ...input })
-          // Clear one-shot actions (tap, release), keep hold actions
-          if (input.action === "tap" || input.action === "release") {
-            input.action = null
-            input.direction = null
-          }
         }
       }, 33)
     }

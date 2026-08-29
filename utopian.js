@@ -258,7 +258,19 @@ function utopian_turret(player) {
 }
 
 function utopian_teleport(player) {
-    let dir = player.components.controller.controller.axes()
+    // Use swipe direction from touch data (hold+swipe triggers this)
+    let nc = player.components.controller.controller.nc
+    let dx = nc.rx - nc.startX
+    let dy = nc.ry - nc.startY
+    let dist = Math.sqrt(dx * dx + dy * dy)
+    let dir
+    if (dist > 0.05) {
+        // Normalize swipe direction
+        dir = new Vector2(dx / dist, dy / dist)
+    } else {
+        // Fallback to joystick
+        dir = player.components.controller.controller.axes()
+    }
 
     let create_rotating_lightning = () => new GameObject(
         player.position.add(new Vector2(0, 0)),

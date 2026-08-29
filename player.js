@@ -6,30 +6,76 @@ Array.prototype.rotate = function(n) {
 }
 
 class GestureController {
+    // Interprets raw touch data from NetworkControl into game gestures.
+    // Detects: tap (quick touch+release), swipe (moved then released quickly),
+    //          hold (touched for a while), hold+swipe (held then swiped)
     constructor(networkControl) {
-        this.networkControl = networkControl
+        this.nc = networkControl
+        // Gesture detection thresholds
+        this.TAP_TIME = 12         // max frames for a tap
+        this.HOLD_TIME = 30        // frames before a hold activates
+        this.SWIPE_THRESHOLD = 0.15 // normalized distance to count as swipe
+        // Internal tracking
+        this._touchFrames = 0      // how many frames the touch has been active
+        this._holdFired = false    // did we already fire a hold gesture this touch?
+        this._gesture = null       // current frame's gesture: { type, direction } or null
+        this._wasTouching = false
     }
 
-    x_axis() {
-        return this.networkControl.axes().x
+    x_axis() { return this.nc.axes().x }
+    y_axis() { return this.nc.axes().y }
+    axes() { return this.nc.axes() }
+
+    // Call once per frame before reading gestures
+    interpret() {
+        this._gesture = null
+        const touching = this.nc.touching
+        const justReleased = this._wasTouching && !touching
+
+        if (touching) {
+            this._touchFrames += dt
+        }
+
+        if (justReleased) {
+            const dx = this.nc.rx - this.nc.startX
+            const dy = this.nc.ry - this.nc.startY
+            const dist = Math.sqrt(dx * dx + dy * dy)
+            const swiped = dist > this.SWIPE_THRESHOLD
+
+            if (this._holdFired && swiped) {
+                // Hold + swipe: held for a while, then swiped a direction before releasing
+                this._gesture = { type: "holdswipe", direction: this._swipeDir(dx, dy) }
+            } else if (swiped && this._touchFrames < this.TAP_TIME * 3) {
+                // Quick swipe (flick)
+                this._gesture = { type: "swipe", direction: this._swipeDir(dx, dy) }
+            } else if (!swiped && this._touchFrames < this.TAP_TIME) {
+                // Quick tap, no movement
+                this._gesture = { type: "tap", direction: null }
+            }
+            // Reset
+            this._touchFrames = 0
+            this._holdFired = false
+        } else if (touching && !this._holdFired && this._touchFrames >= this.HOLD_TIME) {
+            // Hold just activated (still touching)
+            this._holdFired = true
+            this._gesture = { type: "hold", direction: null }
+        }
+
+        this._wasTouching = touching
     }
 
-    y_axis() {
-        return this.networkControl.axes().y
+    _swipeDir(dx, dy) {
+        if (Math.abs(dx) > Math.abs(dy)) {
+            return dx > 0 ? "right" : "left"
+        }
+        return dy > 0 ? "down" : "up"
     }
 
-    axes() {
-        return this.networkControl.axes()
-    }
+    // Returns the gesture detected this frame, or null
+    getGesture() { return this._gesture }
 
-    jump() {
-        return this.networkControl.jump()
-    }
-
-    // Returns { direction, action } or null
-    getGesture() {
-        return this.networkControl.getGesture()
-    }
+    // Tap with no direction = jump
+    jump() { return this._gesture && this._gesture.type === "tap" && this._gesture.direction === null }
 }
 
 class Ability {
@@ -205,16 +251,24 @@ class PlayerControllerComponent {
             this.flip = true
         }
 
+        // Interpret raw touch data into gestures
+        this.controller.interpret()
+
         let gesture = this.controller.getGesture()
-        if (gesture && gesture.action === "tap" && gesture.direction) {
-            // Directional tap → mapped ability
-            let abilityIndex = this.gestureMapping[gesture.direction]
-            if (abilityIndex >= 0 && abilityIndex < this.abilities.length && this.abilities[abilityIndex].usable()) {
-                this.abilities[abilityIndex].run(this.gameobject)
+        if (gesture) {
+            let abilityIndex = -1
+            if (gesture.type === "swipe" && gesture.direction) {
+                // Directional swipe → mapped ability
+                abilityIndex = this.gestureMapping[gesture.direction]
+            } else if (gesture.type === "hold") {
+                // Stationary hold → hold ability
+                abilityIndex = this.gestureMapping.hold
+            } else if (gesture.type === "holdswipe" && gesture.direction) {
+                // Hold then swipe → holdswipe ability (falls back to hold)
+                abilityIndex = this.gestureMapping.holdswipe !== undefined
+                    ? this.gestureMapping.holdswipe
+                    : this.gestureMapping.hold
             }
-        } else if (gesture && gesture.action === "hold") {
-            // Hold (with or without direction) → hold ability
-            let abilityIndex = this.gestureMapping.hold
             if (abilityIndex >= 0 && abilityIndex < this.abilities.length && this.abilities[abilityIndex].usable()) {
                 this.abilities[abilityIndex].run(this.gameobject)
             }
