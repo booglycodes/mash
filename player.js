@@ -14,7 +14,7 @@ class GestureController {
     constructor(networkControl) {
         this.nc = networkControl
         // Thresholds
-        this.TAP_TIME = 10          // max frames for a tap
+        this.TAP_TIME = 60          // max dt-frames for a tap (~500ms at 60fps/4x)
         this.SWIPE_THRESHOLD = 0.15 // normalized distance to trigger directional ability
         // Internal tracking
         this._touchFrames = 0
