@@ -7,21 +7,22 @@ Array.prototype.rotate = function(n) {
 
 class GestureController {
     // Interprets raw touch data from NetworkControl into game gestures.
-    // tap (quick release) = jump
-    // hold + move direction = directional ability (fires once when threshold crossed)
-    // hold + no move + release = hold ability
-    // hold + move + release = holdswipe ability (e.g. teleport)
+    // All gestures fire on RELEASE — nothing fires mid-touch.
+    // Quick touch + release (no move) = tap (jump)
+    // Quick touch + move + release = swipe (directional ability)
+    // Long touch + release (no move) = hold ability
+    // Long touch + move + release = holdswipe ability
     constructor(networkControl) {
         this.nc = networkControl
         // Thresholds
-        this.TAP_TIME = 60          // max dt-frames for a tap (~500ms at 60fps/4x)
-        this.SWIPE_THRESHOLD = 0.15 // normalized distance to trigger directional ability
+        this.TAP_TIME = 60          // max dt-frames for a "quick" touch
+        this.SWIPE_THRESHOLD = 0.15 // normalized distance to count as movement
         // Internal tracking
         this._touchFrames = 0
         this._gesture = null
         this._wasTouching = false
-        this._directionFired = false  // already fired a directional ability this touch
-        this._firedDirection = null   // which direction was fired
+        this._moved = false         // did finger move past threshold during this touch
+        this._moveDir = null        // direction of movement
     }
 
     x_axis() { return this.nc.axes().x }
@@ -35,6 +36,11 @@ class GestureController {
         return dy > 0 ? "down" : "up"
     }
 
+    // Whether the player is currently in a "charging" hold (long touch, hasn't released)
+    isCharging() {
+        return this.nc.touching && this._touchFrames >= this.TAP_TIME
+    }
+
     // Call once per frame before reading gestures
     interpret() {
         this._gesture = null
@@ -44,40 +50,44 @@ class GestureController {
         if (touching) {
             this._touchFrames += dt
 
-            // Check if finger has moved past threshold while held
-            if (!this._directionFired) {
+            // Track if finger has moved past threshold
+            if (!this._moved) {
                 const dx = this.nc.rx - this.nc.startX
                 const dy = this.nc.ry - this.nc.startY
                 const dist = Math.sqrt(dx * dx + dy * dy)
                 if (dist > this.SWIPE_THRESHOLD) {
-                    // Hold + move → directional ability fires immediately
-                    this._firedDirection = this._swipeDir(dx, dy)
-                    this._directionFired = true
-                    this._gesture = { type: "swipe", direction: this._firedDirection }
+                    this._moved = true
+                    this._moveDir = this._swipeDir(dx, dy)
                 }
+            } else {
+                // Update direction to latest position
+                const dx = this.nc.rx - this.nc.startX
+                const dy = this.nc.ry - this.nc.startY
+                this._moveDir = this._swipeDir(dx, dy)
             }
         }
 
         if (justReleased) {
-            if (!this._directionFired && this._touchFrames < this.TAP_TIME) {
-                // Quick tap, no movement → jump
+            const quick = this._touchFrames < this.TAP_TIME
+
+            if (quick && this._moved) {
+                // Quick swipe → directional ability
+                this._gesture = { type: "swipe", direction: this._moveDir }
+            } else if (quick && !this._moved) {
+                // Quick tap → jump
                 this._gesture = { type: "tap", direction: null }
-            } else if (this._directionFired) {
-                // Was holding + moved → holdswipe on release
-                const dx = this.nc.rx - this.nc.startX
-                const dy = this.nc.ry - this.nc.startY
-                const dist = Math.sqrt(dx * dx + dy * dy)
-                if (dist > this.SWIPE_THRESHOLD) {
-                    this._gesture = { type: "holdswipe", direction: this._swipeDir(dx, dy) }
-                }
+            } else if (!quick && this._moved) {
+                // Long hold + moved → holdswipe
+                this._gesture = { type: "holdswipe", direction: this._moveDir }
             } else {
-                // Held without moving → hold ability
+                // Long hold + no move → hold
                 this._gesture = { type: "hold", direction: null }
             }
+
             // Reset
             this._touchFrames = 0
-            this._directionFired = false
-            this._firedDirection = null
+            this._moved = false
+            this._moveDir = null
         }
 
         this._wasTouching = touching
