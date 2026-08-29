@@ -262,9 +262,10 @@ class PlayerControllerComponent {
         // Interpret raw touch data into gestures
         this.controller.interpret()
 
-        // Charging: finger is down and hasn't fired a directional ability yet
+        // Charging: only if this character has a holdswipe ability
         let nc = this.controller.nc
-        this.charging = nc.touching && !this.controller._directionFired
+        let hasHoldswipe = this.gestureMapping.holdswipe !== undefined && this.gestureMapping.holdswipe >= 0
+        this.charging = hasHoldswipe && nc.touching && !this.controller._directionFired
 
         // Slow down while charging
         if (this.charging) {
