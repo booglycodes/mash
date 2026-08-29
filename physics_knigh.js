@@ -20,11 +20,48 @@ snowball.src = 'images/snowflake.png'
 let lightning_cloud = new Image()
 lightning_cloud.src = 'images/lightning_cloud.png'
 
-class KnighProjectileComponent {
-    constructor(max_num_projectiles, current_selection) {
-        this.max_num_projectiles = max_num_projectiles
-        this.current_num_projectiles = 0
-        this.current_selection = current_selection
+class KnighManaComponent {
+    constructor(max_mana, fire_cost, ice_cost, mana_recovery_factor) {
+        this.max_mana = max_mana
+        this.mana = max_mana
+        this.fire_cost = fire_cost
+        this.ice_cost = ice_cost
+        this.mana_recovery_factor = mana_recovery_factor // recovers this fraction of damage dealt
+        this.current_mode = 'fire' // 'fire' or 'ice'
+    }
+
+    draw() {
+        let draw_location = this.gameobject.components.controller.ability_draw_location.add(new Vector2(100, 0))
+        // Mana bar background
+        let barWidth = 150
+        let barHeight = 16
+        let barX = draw_location.x
+        let barY = draw_location.y - 10
+        drawRect(barX, barY, barWidth, barHeight, '#1a1a2e')
+        // Mana bar fill
+        let fillWidth = (this.mana / this.max_mana) * barWidth
+        let barColor = this.current_mode === 'fire' ? '#f97316' : '#38bdf8'
+        drawRect(barX, barY, fillWidth, barHeight, barColor)
+        // Mode label
+        let modeText = this.current_mode === 'fire' ? '🔥 FIRE' : '❄️ ICE'
+        drawText(modeText, 'white', '20px serif', barX + barWidth / 2, barY - 8, 'center')
+        // Mana text
+        drawText(Math.floor(this.mana) + '/' + this.max_mana, 'white', '14px serif', barX + barWidth / 2, barY + barHeight + 14, 'center')
+    }
+
+    recover(damage_dealt) {
+        // damage_dealt is positive (the raw damage amount)
+        this.mana = Math.min(this.max_mana, this.mana + damage_dealt * this.mana_recovery_factor)
+    }
+
+    can_cast() {
+        let cost = this.current_mode === 'fire' ? this.fire_cost : this.ice_cost
+        return this.mana >= cost
+    }
+
+    consume() {
+        let cost = this.current_mode === 'fire' ? this.fire_cost : this.ice_cost
+        this.mana -= cost
     }
 }
 
@@ -58,7 +95,15 @@ function honour_slash(player) {
         }, 
         [
             new Effect(
-                [damage(-20 * (bigly ? 2 : 1)), knockback_angled(20, 7.5)],
+                [
+                    damage(-20 * (bigly ? 2 : 1)),
+                    knockback_angled(20, 7.5),
+                    (attack, _) => {
+                        // Recover mana: 0.5x of damage dealt
+                        let dmg = 20 * (bigly ? 2 : 1)
+                        attack.player.components.knigh_mana.recover(dmg)
+                    }
+                ],
                 and_filters([filter_by_can_damage(), filter_by_hit])
             ),
             new Effect(
@@ -75,15 +120,6 @@ function honour_slash(player) {
     let sword = attatched_hitbox(attack, image, 50, 1.5)
     sword.add_component('reflect', new Reflect(player))
     all_objects.push(sword)
-
-    let dir = (player.components.controller.flip ? 1 : -1)
-    let posn = new Vector2(player.physical_properties.dimensions.x, 0).scale(dir).add(player.position)
-
-    if(player.components.knigh_projectile_component.current_num_projectiles > 0) {
-        player.components.knigh_projectile_component.current_num_projectiles--
-        let projectile_type = player.components.knigh_projectile_component.current_selection
-        all_objects.push(projectile_type(player, posn, new Vector2(1, 0).scale(dir), 5000))
-    }
 }
 
 function ice_projectile(player, position, velocity, time_alive) {
@@ -186,16 +222,28 @@ function spawn_math(number, position, velocity) {
     )
 }
 
-function knigh_ice(player) {
+function knigh_toggle_mode(player) {
     magic_noise.play()
-    player.components.knigh_projectile_component.current_selection = ice_projectile
-    player.components.knigh_projectile_component.current_num_projectiles = player.components.knigh_projectile_component.max_num_projectiles
+    let mana = player.components.knigh_mana
+    mana.current_mode = mana.current_mode === 'fire' ? 'ice' : 'fire'
 }
 
-function knigh_fire(player) {
+function knigh_cast(player) {
+    let mana = player.components.knigh_mana
+    if (!mana.can_cast()) return
+
     magic_noise.play()
-    player.components.knigh_projectile_component.current_selection = fire_projectile
-    player.components.knigh_projectile_component.current_num_projectiles = player.components.knigh_projectile_component.max_num_projectiles
+    mana.consume()
+
+    let dir = (player.components.controller.flip ? 1 : -1)
+    let posn = new Vector2(player.physical_properties.dimensions.x, 0).scale(dir).add(player.position)
+    let velocity = new Vector2(1, 0).scale(dir)
+
+    if (mana.current_mode === 'fire') {
+        all_objects.push(fire_projectile(player, posn, velocity, 5000))
+    } else {
+        all_objects.push(ice_projectile(player, posn, velocity, 5000))
+    }
 }
 
 function knigh_lightning(player) {
@@ -217,8 +265,8 @@ function knigh_lightning(player) {
 function create_knigh(gamepad, position, ability_draw_location, skin_name, gestureMapping) {
     let abilities = [
         new Ability(honour_slash, "honour slash", 110),
-        new Ability(knigh_fire, "fire magic", 400),
-        new Ability(knigh_ice, "ice magic", 400),
+        new Ability(knigh_toggle_mode, "toggle fire/ice", 30, true),
+        new Ability(knigh_cast, "cast projectile", 60, true),
         new Ability(knigh_lightning, "lightning magic", 1500, true),
         new Ability(physics_homework, "physics homework", 1750, true)
     ]
@@ -238,7 +286,7 @@ function create_knigh(gamepad, position, ability_draw_location, skin_name, gestu
                 gestureMapping
             ), 
             stats : new PlayerStatsComponent(250),
-            knigh_projectile_component : new KnighProjectileComponent(3, null)
+            knigh_mana : new KnighManaComponent(100, 20, 40, 0.5)
         }
     )
 }

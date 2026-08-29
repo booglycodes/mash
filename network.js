@@ -38,8 +38,8 @@ const CHARACTER_MAPPINGS = {
     labels: { up: "BIGLY PUNCH", left: "THROW ORANGE", right: "THROW ORANGE", down: "BUILD WALL", hold: "RED STATE" }
   },
   stoner: {
-    up: 2, left: 0, right: 3, down: 1, hold: 4,
-    labels: { up: "HIGH LIFE", left: "DRUGS", right: "FREE WEED", down: "BIGBONGO", hold: "POT BROWNIE" }
+    up: 2, left: 0, right: 0, down: 4, hold: 3, holdswipe: 1,
+    labels: { up: "HIGH LIFE", left: "DRUGS", right: "DRUGS", down: "POT BROWNIE", hold: "FREE WEED", holdswipe: "BIGBONGO" }
   },
   faceman: {
     up: 0, left: 0, right: 0, down: 2, hold: -1, holdswipe: 1,
@@ -50,8 +50,8 @@ const CHARACTER_MAPPINGS = {
     labels: { up: "EAT", left: "EAT", right: "EAT", down: "BELCH", hold: "", holdswipe: "RUSHDOWN" }
   },
   knigh: {
-    up: 3, left: 1, right: 2, down: 0, hold: 4,
-    labels: { up: "LIGHTNING", left: "FIRE", right: "ICE", down: "HONOUR SLASH", hold: "PHYSICS HW" }
+    up: 3, left: 0, right: 0, down: 1, hold: 4, holdswipe: 2,
+    labels: { up: "LIGHTNING", left: "HONOUR SLASH", right: "HONOUR SLASH", down: "TOGGLE FIRE/ICE", hold: "PHYSICS HW", holdswipe: "CAST PROJECTILE" }
   },
   utopian: {
     up: 3, left: 0, right: 0, down: 2, hold: 1, holdswipe: 4,
