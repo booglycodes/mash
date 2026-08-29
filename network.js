@@ -42,12 +42,12 @@ const CHARACTER_MAPPINGS = {
     labels: { up: "HIGH LIFE", left: "DRUGS", right: "FREE WEED", down: "BIGBONGO", hold: "POT BROWNIE" }
   },
   faceman: {
-    up: 0, left: 1, right: 1, down: 2, hold: -1,
-    labels: { up: "EAT", left: "RUSHDOWN", right: "RUSHDOWN", down: "BELCH", hold: "" }
+    up: 0, left: 0, right: 0, down: 2, hold: -1, holdswipe: 1,
+    labels: { up: "EAT", left: "EAT", right: "EAT", down: "BELCH", hold: "", holdswipe: "RUSHDOWN" }
   },
   faceman_shaman: {
-    up: 0, left: 1, right: 1, down: 2, hold: -1,
-    labels: { up: "EAT", left: "RUSHDOWN", right: "RUSHDOWN", down: "BELCH", hold: "" }
+    up: 0, left: 0, right: 0, down: 2, hold: -1, holdswipe: 1,
+    labels: { up: "EAT", left: "EAT", right: "EAT", down: "BELCH", hold: "", holdswipe: "RUSHDOWN" }
   },
   knigh: {
     up: 3, left: 1, right: 2, down: 0, hold: 4,

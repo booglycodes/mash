@@ -77,8 +77,17 @@ function faceman_bite(player) {
 
 function faceman_rush(player) {
     rushdown_noise.play()
-    console.log(player.components.controller)
-    let dir = player.components.controller.controller.axes()
+    // Use swipe direction from touch data (holdswipe triggers this)
+    let nc = player.components.controller.controller.nc
+    let dx = nc.rx - nc.startX
+    let dy = nc.ry - nc.startY
+    let dist = Math.sqrt(dx * dx + dy * dy)
+    let dir
+    if (dist > 0.05) {
+        dir = new Vector2(dx / dist, dy / dist)
+    } else {
+        dir = player.components.controller.controller.axes()
+    }
     player.physical_properties.velocity = dir.scale(35)
     
     let attack = new Attack(
