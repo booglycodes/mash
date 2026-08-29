@@ -179,14 +179,50 @@ function arm_donkey(player, target) {
 }
 
 const shrek_grab_range = 200
+
+function shrek_grab_only(player) {
+    let grab = player.components.shrekgrab
+    if (grab.target !== null) return // already holding
+    let target = find_target_with_tag(player, player, 'grabbable')
+    if (target === null || target.position.sqr_dist(player.position) > shrek_grab_range * shrek_grab_range) return
+    grab.grab(target)
+}
+
+function shrek_throw_only(player) {
+    let grab = player.components.shrekgrab
+    if (grab.target === null) return // not holding anything
+    // Use swipe direction from touch data
+    let nc = player.components.controller.controller.nc
+    let dx = nc.rx - nc.startX
+    let dy = nc.ry - nc.startY
+    let dist = Math.sqrt(dx * dx + dy * dy)
+    let dir
+    if (dist > 0.05) {
+        dir = new Vector2(dx / dist, dy / dist)
+    } else {
+        dir = player.components.controller.controller.axes()
+    }
+    // Apply throw
+    let target = grab.target
+    if (target.components.controller !== undefined) {
+        target.components.controller.freeze_time = 0
+    }
+    target.physical_properties.velocity = dir.scale(40)
+    target.physical_properties.is_kinematic = true
+    setTimeout(function() { target.physical_properties.is_kinematic = false }, 10)
+    arm_donkey(player, target)
+    grab.target = null
+}
+
 function create_shrek(gamepad, position, ability_draw_location, skin_name, gestureMapping) {
-    let shrek_grab_ability = new Ability(grab_function(shrek_grab_range, 'shrekgrab'), 'shrekgrab', 80, true)
+    let shrek_grab_ability = new Ability(shrek_grab_only, 'grab', 80, true)
     let abilities = [
         new Ability(shrekdown, 'shrekdown', 500, true),
         new Ability(donkey, 'donkey', 300, true),
         shrek_grab_ability,
         new Ability(shrekstitution_left, 'shrekstitution ←', 50, true),
-        new Ability(shrekstitution_right, 'shrekstitution →', 50, true)
+        new Ability(shrekstitution_right, 'shrekstitution →', 50, true),
+        new Ability(shrek_throw_only, 'throw', 10, true)
     ]
 
     return new GameObject(
@@ -206,8 +242,7 @@ function create_shrek(gamepad, position, ability_draw_location, skin_name, gestu
             stats : new PlayerStatsComponent(300),
             shrekdown : new ShrekDownComponent(-20, 35, -1000, 3),
             shrekgrab : new GrabComponent(new Vector2(0, -0.8), new Vector2(0, -0.5), 120, shrek_grab_ability, [
-                arm_donkey,
-                throw_target(40)
+                arm_donkey
             ], [])
         }
     )

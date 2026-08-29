@@ -58,8 +58,8 @@ const CHARACTER_MAPPINGS = {
     labels: { up: "TURRET", left: "SHOCK", right: "SHOCK", down: "DRONES", hold: "GENERATOR", holdswipe: "TELEPORT" }
   },
   shrek: {
-    up: 2, left: 3, right: 4, down: 0, hold: 1,
-    labels: { up: "GRAB", left: "SHREKSTITUTION ←", right: "SHREKSTITUTION →", down: "SHREKDOWN", hold: "DONKEY" }
+    up: 1, left: 3, right: 4, down: 0, hold: 2, holdswipe: 5,
+    labels: { up: "DONKEY", left: "SHREKSTITUTION ←", right: "SHREKSTITUTION →", down: "SHREKDOWN", hold: "GRAB", holdswipe: "THROW" }
   },
   monke: {
     up: 0, left: 0, right: 0, down: 0, hold: -1,
