@@ -232,7 +232,7 @@ function spawn_state(state, position) {
     )
 }
 
-function create_trump(gamepad, position, ability_draw_location, skin_name) {
+function create_trump(gamepad, position, ability_draw_location, skin_name, gestureMapping) {
     let abilities = [
         new Ability(bigly_punch, "bigly punch", 150, true, 3, 30),
         new Ability(throw_orange, "throw orange", 300, true),
@@ -243,7 +243,7 @@ function create_trump(gamepad, position, ability_draw_location, skin_name) {
     let trump_stats = new PlayerStatsComponent(244)
 
     let trump_controller_properties = new PlayerControllerProperties(-30, 70, 17, 2)
-    let trump_controller = new PlayerControllerComponent(trump_skins[skin_name], ability_draw_location, gamepad, abilities, trump_controller_properties)
+    let trump_controller = new PlayerControllerComponent(trump_skins[skin_name], ability_draw_location, gamepad, abilities, trump_controller_properties, false, gestureMapping)
 
     let trump_physical_properties = new PhysicalProperties(new Vector2(0, 0), 244, 0.45, new Vector2(100, 100), 0, false)
     let trump_gameobject = new GameObject(

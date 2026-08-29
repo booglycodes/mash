@@ -434,7 +434,7 @@ function grab_function(grab_range, component_name) {
 
 function throw_target(speed) {
     return (player, target) => {
-        let dir = player.components.controller.controller.controller.axes()
+        let dir = player.components.controller.controller.axes()
         target.physical_properties.velocity = dir.scale(speed)
         target.physical_properties.is_kinematic = true
         setTimeout(function() {

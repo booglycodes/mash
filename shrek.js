@@ -179,7 +179,7 @@ function arm_donkey(player, target) {
 }
 
 const shrek_grab_range = 200
-function create_shrek(gamepad, position, ability_draw_location, skin_name) {
+function create_shrek(gamepad, position, ability_draw_location, skin_name, gestureMapping) {
     let shrek_grab_ability = new Ability(grab_function(shrek_grab_range, 'shrekgrab'), 'shrekgrab', 80, true)
     let abilities = [
         new Ability(shrekdown, 'shrekdown', 500, true),
@@ -200,7 +200,8 @@ function create_shrek(gamepad, position, ability_draw_location, skin_name) {
                 gamepad, 
                 abilities, 
                 new PlayerControllerProperties(-20.5, 30, 6.5, 3), 
-                false
+                false,
+                gestureMapping
             ), 
             stats : new PlayerStatsComponent(300),
             shrekdown : new ShrekDownComponent(-20, 35, -1000, 3),

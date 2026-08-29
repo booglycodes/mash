@@ -258,7 +258,7 @@ function utopian_turret(player) {
 }
 
 function utopian_teleport(player) {
-    let dir = player.components.controller.controller.controller.axes()
+    let dir = player.components.controller.controller.axes()
 
     let create_rotating_lightning = () => new GameObject(
         player.position.add(new Vector2(0, 0)),
@@ -274,7 +274,7 @@ function utopian_teleport(player) {
     all_objects.push(create_rotating_lightning())
 }
 
-function create_utopian(gamepad, position, ability_draw_location, skin_name) {
+function create_utopian(gamepad, position, ability_draw_location, skin_name, gestureMapping) {
     let abilities = [
         new Ability(utopian_shock, 'shock', 20),
         new Ability(utopian_generator, 'generator', 355),
@@ -294,7 +294,8 @@ function create_utopian(gamepad, position, ability_draw_location, skin_name) {
                 gamepad, 
                 abilities, 
                 new PlayerControllerProperties(-8.5, 20, 5.5, 3), 
-                true
+                true,
+                gestureMapping
             ), 
             stats : new PlayerStatsComponent(256),
             energy : new EnergyComponent(50, 3, 60)

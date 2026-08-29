@@ -214,7 +214,7 @@ function knigh_lightning(player) {
     all_objects.push(lightning)
 }
 
-function create_knigh(gamepad, position, ability_draw_location, skin_name) {
+function create_knigh(gamepad, position, ability_draw_location, skin_name, gestureMapping) {
     let abilities = [
         new Ability(honour_slash, "honour slash", 110),
         new Ability(knigh_fire, "fire magic", 400),
@@ -234,7 +234,8 @@ function create_knigh(gamepad, position, ability_draw_location, skin_name) {
                 gamepad, 
                 abilities, 
                 new PlayerControllerProperties(-26, 25, 8, 2), 
-                false
+                false,
+                gestureMapping
             ), 
             stats : new PlayerStatsComponent(250),
             knigh_projectile_component : new KnighProjectileComponent(3, null)

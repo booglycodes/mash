@@ -74,7 +74,8 @@ function platform_semisolid(width, height, position, color) {
 }
 
 function create_player(char_name, skin_name, gamepad, spawn_position, ability_draw_location) {
-    let player = character_roster[char_name].create(gamepad, spawn_position, ability_draw_location, skin_name)
+    let mapping = CHARACTER_MAPPINGS[char_name] || CHARACTER_MAPPINGS[Object.keys(CHARACTER_MAPPINGS)[0]]
+    let player = character_roster[char_name].create(gamepad, spawn_position, ability_draw_location, skin_name, mapping)
     all_objects.push(player)
     return player
 }

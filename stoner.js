@@ -260,7 +260,7 @@ function do_drugs(player) {
     player.components.inventory.take_all_drugs(player)
 }
 
-function create_stoner(gamepad, position, ability_draw_location, skin_name) {
+function create_stoner(gamepad, position, ability_draw_location, skin_name, gestureMapping) {
     let abilities = [
         new Ability(do_drugs, "have some drugs man", 300),
         new Ability(bigBongo, "bigBongo", 420, true),
@@ -272,7 +272,7 @@ function create_stoner(gamepad, position, ability_draw_location, skin_name) {
     let stoner_stats = new PlayerStatsComponent(420)
 
     let stoner_controller_properties = new PlayerControllerProperties(-12, 50, 15, 6)
-    let stoner_controller = new PlayerControllerComponent(stoner_skins[skin_name], ability_draw_location, gamepad, abilities, stoner_controller_properties)
+    let stoner_controller = new PlayerControllerComponent(stoner_skins[skin_name], ability_draw_location, gamepad, abilities, stoner_controller_properties, false, gestureMapping)
 
     let stoner_physical_properties = new PhysicalProperties(new Vector2(0, 0), 200, 0.3, new Vector2(75, 75), 0, false)
     let stoner_gameobject = new GameObject(

@@ -30,82 +30,68 @@ function getCharData() {
   return data
 }
 
-// Button mapping per character
+// Gesture-to-ability mapping per character
+// Each gesture (up/down/left/right/hold) maps directly to an ability index, or -1 for none
 const CHARACTER_MAPPINGS = {
   trump: {
-    b0: 0, b1: 1, b2: 1, b3: 2, b4: 3,
-    numAbilities: 4,
+    up: 0, left: 1, right: 1, down: 2, hold: 3,
     labels: { up: "BIGLY PUNCH", left: "THROW ORANGE", right: "THROW ORANGE", down: "BUILD WALL", hold: "RED STATE" }
   },
   stoner: {
-    b0: 2, b1: 0, b2: 3, b3: 1, b4: 4,
-    numAbilities: 5,
+    up: 2, left: 0, right: 3, down: 1, hold: 4,
     labels: { up: "HIGH LIFE", left: "DRUGS", right: "FREE WEED", down: "BIGBONGO", hold: "POT BROWNIE" }
   },
   faceman: {
-    b0: 0, b1: 1, b2: 1, b3: 2, b4: -1,
-    numAbilities: 3,
+    up: 0, left: 1, right: 1, down: 2, hold: -1,
     labels: { up: "EAT", left: "RUSHDOWN", right: "RUSHDOWN", down: "BELCH", hold: "" }
   },
   faceman_shaman: {
-    b0: 0, b1: 1, b2: 1, b3: 2, b4: -1,
-    numAbilities: 3,
+    up: 0, left: 1, right: 1, down: 2, hold: -1,
     labels: { up: "EAT", left: "RUSHDOWN", right: "RUSHDOWN", down: "BELCH", hold: "" }
   },
   knigh: {
-    b0: 3, b1: 1, b2: 2, b3: 0, b4: 4,
-    numAbilities: 5,
+    up: 3, left: 1, right: 2, down: 0, hold: 4,
     labels: { up: "LIGHTNING", left: "FIRE", right: "ICE", down: "HONOUR SLASH", hold: "PHYSICS HW" }
   },
   utopian: {
-    b0: 3, b1: 1, b2: 2, b3: 0, b4: 4,
-    numAbilities: 5,
+    up: 3, left: 1, right: 2, down: 0, hold: 4,
     labels: { up: "TURRET", left: "GENERATOR", right: "DRONES", down: "SHOCK", hold: "TELEPORT" }
   },
   shrek: {
-    b0: 2, b1: 3, b2: 4, b3: 0, b4: 1,
-    numAbilities: 5,
+    up: 2, left: 3, right: 4, down: 0, hold: 1,
     labels: { up: "GRAB", left: "SHREKSTITUTION ←", right: "SHREKSTITUTION →", down: "SHREKDOWN", hold: "DONKEY" }
   },
   monke: {
-    b0: 0, b1: 0, b2: 0, b3: 0, b4: -1,
-    numAbilities: 1,
+    up: 0, left: 0, right: 0, down: 0, hold: -1,
     labels: { up: "GRAB", left: "GRAB", right: "GRAB", down: "GRAB", hold: "" }
   }
 }
 
 // === NETWORK CONTROL ===
+// Stores raw gesture input from controller.html:
+//   { dx, dy, direction: "up"|"left"|"right"|"down"|null, action: "tap"|"hold"|"release"|null }
 class NetworkControl {
-  constructor(characterName) {
+  constructor() {
     this._axes = new Vector2(0, 0)
-    this._jump = false
-    this._rawButtons = [false, false, false, false, false]
-    this.characterName = characterName || 'trump'
-    this.mapping = CHARACTER_MAPPINGS[this.characterName] || CHARACTER_MAPPINGS.trump
-  }
-
-  setCharacter(name) {
-    this.characterName = name
-    this.mapping = CHARACTER_MAPPINGS[name] || CHARACTER_MAPPINGS.trump
+    this._direction = null   // "up", "left", "right", "down", or null
+    this._action = null      // "tap", "hold", "release", or null
   }
 
   updateInput(data) {
     this._axes = new Vector2(data.dx || 0, data.dy || 0)
-    this._jump = !!data.jump
-    this._rawButtons = [!!data.b0, !!data.b1, !!data.b2, !!data.b3, !!data.b4]
+    this._direction = data.direction || null
+    this._action = data.action || null
   }
 
   axes() { return this._axes }
-  jump() { return this._jump }
 
-  buttons() {
-    const out = new Array(this.mapping.numAbilities).fill(false)
-    for (let i = 0; i < 5; i++) {
-      if (this._rawButtons[i] && this.mapping[`b${i}`] >= 0) {
-        out[this.mapping[`b${i}`]] = true
-      }
-    }
-    return out
+  // No-direction tap = jump
+  jump() { return this._action === "tap" && this._direction === null }
+
+  // Returns current gesture: { direction, action } or null if idle
+  getGesture() {
+    if (!this._action) return null
+    return { direction: this._direction, action: this._action }
   }
 }
 
@@ -219,20 +205,15 @@ function startGame() {
   // Reset all control state so nothing is stuck from previous round
   for (const ctrl of networkControls.values()) {
     ctrl._axes = new Vector2(0, 0)
-    ctrl._jump = false
-    ctrl._rawButtons = [false, false, false, false, false]
+    ctrl._direction = null
+    ctrl._action = null
   }
 
-  // Assign characters to controls
+  // Send labels and player number to each phone
   for (let i = 0; i < connectedPeers.length; i++) {
     const peer = connectedPeers[i]
-    const ctrl = networkControls.get(peer.peerId)
-    if (ctrl) {
-      ctrl.setCharacter(peer.selectedChar)
-      // Send labels and player number to phone
-      const mapping = CHARACTER_MAPPINGS[peer.selectedChar] || CHARACTER_MAPPINGS.trump
-      sendCharInfo({ labels: mapping.labels, phase: PHASE_PLAYING, playerNum: i + 1 }, peer.peerId)
-    }
+    const mapping = CHARACTER_MAPPINGS[peer.selectedChar] || CHARACTER_MAPPINGS.trump
+    sendCharInfo({ labels: mapping.labels, phase: PHASE_PLAYING, playerNum: i + 1 }, peer.peerId)
   }
 
   transitionTo(PHASE_PLAYING)

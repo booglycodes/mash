@@ -78,7 +78,7 @@ function faceman_bite(player) {
 function faceman_rush(player) {
     rushdown_noise.play()
     console.log(player.components.controller)
-    let dir = player.components.controller.controller.controller.axes()
+    let dir = player.components.controller.controller.axes()
     player.physical_properties.velocity = dir.scale(35)
     
     let attack = new Attack(
@@ -140,7 +140,7 @@ function belch_projectile(player, position, velocity, mass, time_alive, elastici
     return belch
 }
 
-function create_faceman(gamepad, position, ability_draw_location, skin_name) {
+function create_faceman(gamepad, position, ability_draw_location, skin_name, gestureMapping) {
     let abilities = [
         new Ability(faceman_bite, 'eat', 500),
         new Ability(faceman_rush, 'rushdown', 300, true, 2, 20),
@@ -158,7 +158,8 @@ function create_faceman(gamepad, position, ability_draw_location, skin_name) {
                 gamepad, 
                 abilities, 
                 new PlayerControllerProperties(-10.5, 30, 5, 3), 
-                true
+                true,
+                gestureMapping
             ), 
             stats : new PlayerStatsComponent(180)
         }

@@ -5,41 +5,30 @@ Array.prototype.rotate = function(n) {
     return this;
 }
 
-class Controller {
-    constructor(controller) {
-        this.controller = controller
-        this.axis_threshold = 0.05
+class GestureController {
+    constructor(networkControl) {
+        this.networkControl = networkControl
     }
 
     x_axis() {
-        return this.controller.axes().x
+        return this.networkControl.axes().x
     }
 
     y_axis() {
-        return this.controller.axes().y
+        return this.networkControl.axes().y
     }
 
     axes() {
-        return this.controller.axes()
+        return this.networkControl.axes()
     }
 
     jump() {
-        return this.controller.jump()
+        return this.networkControl.jump()
     }
 
-    get_button() {
-        if (this.controller.buttons()[0] && this.controller.buttons()[1]) {
-            return 4;
-        }
-        if (this.controller.buttons()[0] && this.controller.buttons()[2]) {
-            return 5;
-        }
-        for (let i = 0; i < this.controller.buttons().length; i++) {
-            if (this.controller.buttons()[i]) {
-                return i
-            }
-        }
-        return -1
+    // Returns { direction, action } or null
+    getGesture() {
+        return this.networkControl.getGesture()
     }
 }
 
@@ -103,12 +92,12 @@ class PlayerControllerProperties {
 
 const out_of_bounds_dpf = 0.0005
 class PlayerControllerComponent {
-    constructor(skin, ability_draw_location, controller, abilities, properties, flipped) {
-        this.controller = new Controller(controller)
+    constructor(skin, ability_draw_location, controller, abilities, properties, flipped, gestureMapping) {
+        this.controller = new GestureController(controller)
         this.abilities = abilities
         this.properties = properties
+        this.gestureMapping = gestureMapping || { up: -1, down: -1, left: -1, right: -1, hold: -1 }
         this.jumps_left = 0
-        this.ability_switch_was_pressed = false
         this.jump_was_pressed = false
         this.flip = false
         this.skin = skin
@@ -216,9 +205,19 @@ class PlayerControllerComponent {
             this.flip = true
         }
 
-        let ability = this.controller.get_button()
-        if (ability < this.abilities.length && ability >= 0 && this.abilities[ability].usable()) {
-            this.abilities[ability].run(this.gameobject)
+        let gesture = this.controller.getGesture()
+        if (gesture && gesture.action === "tap" && gesture.direction) {
+            // Directional tap → mapped ability
+            let abilityIndex = this.gestureMapping[gesture.direction]
+            if (abilityIndex >= 0 && abilityIndex < this.abilities.length && this.abilities[abilityIndex].usable()) {
+                this.abilities[abilityIndex].run(this.gameobject)
+            }
+        } else if (gesture && gesture.action === "hold") {
+            // Hold (with or without direction) → hold ability
+            let abilityIndex = this.gestureMapping.hold
+            if (abilityIndex >= 0 && abilityIndex < this.abilities.length && this.abilities[abilityIndex].usable()) {
+                this.abilities[abilityIndex].run(this.gameobject)
+            }
         }
         
         for(let i = 0; i < this.abilities.length; i++) {

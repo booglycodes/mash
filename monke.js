@@ -114,7 +114,7 @@ class ItemSpawner {
 }
 
 const monke_grab_range = 200
-function create_monke(gamepad, position, ability_draw_location, skin_name) {
+function create_monke(gamepad, position, ability_draw_location, skin_name, gestureMapping) {
     let monke_grab_ability = new Ability(grab_function(monke_grab_range, 'grab'), 'monkegrab', 80, true)
     let abilities = [
         monke_grab_ability,
@@ -131,7 +131,8 @@ function create_monke(gamepad, position, ability_draw_location, skin_name) {
                 gamepad, 
                 abilities, 
                 new PlayerControllerProperties(-25, 25, 3, 5), 
-                true
+                true,
+                gestureMapping
             ),
             grab : new GrabComponent(new Vector2(0.6, 0.0), new Vector2(0.5, -0.5), 120, monke_grab_ability, [
                 throw_target(40),
