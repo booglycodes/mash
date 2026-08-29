@@ -54,8 +54,8 @@ const CHARACTER_MAPPINGS = {
     labels: { up: "LIGHTNING", left: "FIRE", right: "ICE", down: "HONOUR SLASH", hold: "PHYSICS HW" }
   },
   utopian: {
-    up: 3, left: 1, right: 2, down: 0, hold: -1, holdswipe: 4,
-    labels: { up: "TURRET", left: "GENERATOR", right: "DRONES", down: "SHOCK", hold: "", holdswipe: "TELEPORT" }
+    up: 3, left: 0, right: 0, down: 2, hold: 1, holdswipe: 4,
+    labels: { up: "TURRET", left: "SHOCK", right: "SHOCK", down: "DRONES", hold: "GENERATOR", holdswipe: "TELEPORT" }
   },
   shrek: {
     up: 2, left: 3, right: 4, down: 0, hold: 1,
