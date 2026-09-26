@@ -1,7 +1,14 @@
 // Nike stage — falling branches (knockback) and floating leaves (heal)
 
-let branch_img = new Image()
-branch_img.src = 'images/branch.png'
+// Branch variants, all 210x75. A random one (and random horizontal flip) is used per branch.
+let branch_imgs = ['branch_fork', 'branch_point', 'branch_gnarl', 'branch_hook'].map(name => {
+    let img = new Image()
+    img.src = 'images/' + name + '.png'
+    return img
+})
+function random_branch_img() {
+    return branch_imgs[Math.floor(Math.random() * branch_imgs.length)]
+}
 
 let leaf_img = new Image()
 leaf_img.src = 'images/leaf.png'
@@ -26,6 +33,7 @@ class TreeTrunkComponent {
         let n = 2 + Math.floor(rng() * 2)
         for (let i = 0; i < n; i++) {
             this.stubs.push({
+                img: Math.floor(rng() * branch_imgs.length),
                 side: rng() < 0.5 ? -1 : 1,
                 dy: 60 + rng() * 260,             // px below the top edge
                 scale: 0.35 + rng() * 0.25,       // relative to branch image
@@ -73,15 +81,16 @@ class TreeTrunkComponent {
         ctx.restore()
 
         // Stub branches poking out the sides
-        if (branch_img.complete && branch_img.naturalWidth > 0) {
-            for (let i = 0; i < this.stubs.length; i++) {
-                let s = this.stubs[i]
-                let w = branch_img.width * s.scale
-                let h = branch_img.height * s.scale
+        for (let i = 0; i < this.stubs.length; i++) {
+            let s = this.stubs[i]
+            let img = branch_imgs[s.img]
+            if (img.complete && img.naturalWidth > 0) {
+                let w = img.width * s.scale
+                let h = img.height * s.scale
                 let edge_x = s.side < 0 ? x : x + d.x
                 let cx = edge_x + s.side * w * 0.3
                 // branch image points right; flip it for the left side
-                drawImage(branch_img, cx, y + s.dy, w, h, s.side * s.angle, s.side < 0, false, true)
+                drawImage(img, cx, y + s.dy, w, h, s.side * s.angle, s.side < 0, false, true)
             }
         }
     }
@@ -159,7 +168,7 @@ function spawn_branch() {
         }
     }
 
-    let image = new ImageComponent(branch_img, new Vector2(0, 0), false)
+    let image = new ImageComponent(random_branch_img(), new Vector2(0, 0), Math.random() < 0.5)
 
     let physics = new PhysicalProperties(
         new Vector2(rand_between(-2, 2), rand_between(8, 14)),
