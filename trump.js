@@ -206,9 +206,12 @@ function build_wall(player) {
     player.components.approval.approval += 0.1
     all_objects.push(wall)
 
-    // Trump rides the wall up: feet on the wall's top edge
+    // Trump rides the wall up: feet exactly on the wall's top edge. This is his recovery move,
+    // so refresh jumps here instead of waiting a frame for the collision pass to notice he's grounded.
     player.position = new Vector2(player.position.x, wall.position.y - wall_size.y / 2 - player_half_h)
     player.physical_properties.velocity.y = 0
+    player.components.controller.jumps_left = player.components.controller.properties.num_jumps
+    player.components.controller.touching_ground = true
 }
 
 function red_state(player) {
