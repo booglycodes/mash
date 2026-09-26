@@ -9,6 +9,107 @@ leaf_img.src = 'images/leaf.png'
 let forest_bg = new Image()
 forest_bg.src = 'images/nike.webp'
 
+let bark_img = new Image()
+bark_img.src = 'images/bark.png'
+
+// Draws a solid platform as a tree trunk: tiled bark, edge shading for roundness,
+// a mossy top edge, and a few decorative stub branches. Collision box is unchanged.
+class TreeTrunkComponent {
+    constructor(seed) {
+        let rng = mulberry32(seed)
+        this.pattern = null
+        this.moss_drips = []
+        for (let i = 0; i < 7; i++) {
+            this.moss_drips.push({ x: rng(), w: 0.04 + rng() * 0.08, h: 8 + rng() * 22 })
+        }
+        this.stubs = []
+        let n = 2 + Math.floor(rng() * 2)
+        for (let i = 0; i < n; i++) {
+            this.stubs.push({
+                side: rng() < 0.5 ? -1 : 1,
+                dy: 60 + rng() * 260,             // px below the top edge
+                scale: 0.35 + rng() * 0.25,       // relative to branch image
+                angle: (rng() - 0.3) * 30         // degrees, mostly angled upward
+            })
+        }
+    }
+
+    draw() {
+        let d = this.gameobject.physical_properties.dimensions
+        let p = this.gameobject.position
+        let x = p.x - d.x / 2
+        let y = p.y - d.y / 2
+
+        let bark_ready = bark_img.complete && bark_img.naturalWidth > 0
+        ctx.save()
+        ctx.translate(x, y)
+        if (bark_ready) {
+            if (this.pattern === null) this.pattern = ctx.createPattern(bark_img, 'repeat')
+            ctx.fillStyle = this.pattern
+        } else {
+            ctx.fillStyle = '#4a3018'
+        }
+        ctx.fillRect(0, 0, d.x, d.y)
+
+        // Shade the edges so the column reads as cylindrical
+        let grad = ctx.createLinearGradient(0, 0, d.x, 0)
+        grad.addColorStop(0.00, 'rgba(0,0,0,0.55)')
+        grad.addColorStop(0.22, 'rgba(0,0,0,0)')
+        grad.addColorStop(0.45, 'rgba(255,220,160,0.08)')
+        grad.addColorStop(0.70, 'rgba(0,0,0,0)')
+        grad.addColorStop(1.00, 'rgba(0,0,0,0.6)')
+        ctx.fillStyle = grad
+        ctx.fillRect(0, 0, d.x, d.y)
+
+        // Mossy top edge with a few drips
+        ctx.fillStyle = '#4f7a2a'
+        ctx.fillRect(0, 0, d.x, 10)
+        for (let i = 0; i < this.moss_drips.length; i++) {
+            let m = this.moss_drips[i]
+            ctx.fillRect(m.x * d.x, 0, m.w * d.x, m.h)
+        }
+        ctx.fillStyle = '#7fb14a'
+        ctx.fillRect(0, 0, d.x, 3)
+        ctx.restore()
+
+        // Stub branches poking out the sides
+        if (branch_img.complete && branch_img.naturalWidth > 0) {
+            for (let i = 0; i < this.stubs.length; i++) {
+                let s = this.stubs[i]
+                let w = branch_img.width * s.scale
+                let h = branch_img.height * s.scale
+                let edge_x = s.side < 0 ? x : x + d.x
+                let cx = edge_x + s.side * w * 0.3
+                // branch image points right; flip it for the left side
+                drawImage(branch_img, cx, y + s.dy, w, h, s.side * s.angle, s.side < 0, false, true)
+            }
+        }
+    }
+}
+
+// Small seeded PRNG so trunk decoration is stable across frames and rounds
+function mulberry32(seed) {
+    let a = seed >>> 0
+    return function() {
+        a = (a + 0x6D2B79F5) | 0
+        let t = Math.imul(a ^ (a >>> 15), 1 | a)
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+    }
+}
+
+// A tall solid tree trunk whose top edge sits at `top_y`, reaching down past the death floor.
+function trunk(width, center_x, top_y, seed) {
+    let height = 1400
+    let physics = new PhysicalProperties(new Vector2(0, 0), Infinity, 0, new Vector2(width, height), 1, false)
+    return new GameObject(
+        new Vector2(center_x, top_y + height / 2),
+        physics,
+        ['ground'],
+        { display: new TreeTrunkComponent(seed) }
+    )
+}
+
 // Wood cracking sounds (CC0, see sounds/CREDITS.md). Picked at random per branch.
 const branch_crack_sounds = [
     new Audio('sounds/branch_crack_1.mp3'),
