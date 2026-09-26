@@ -321,7 +321,17 @@
             ctx.font = "28px system-ui"
             ctx.textAlign = "center"
             const allLocked = connectedPeers.length > 0 && connectedPeers.every(p => p.locked)
-            const statusText = allLocked && connectedPeers.length >= 2 ? "Starting..." : `${connectedPeers.length} player(s) connected`
+            const testMode = new URLSearchParams(window.location.search).get('test') === 'true'
+            const enoughPlayers = connectedPeers.length >= 2 || testMode
+            let statusText
+            if (allLocked && enoughPlayers) {
+                statusText = "Starting..."
+            } else if (connectedPeers.length === 1 && !testMode) {
+                statusText = "1 player connected — need 2 to start (or add ?test=true)"
+            } else {
+                const lockedCount = connectedPeers.filter(p => p.locked).length
+                statusText = `${connectedPeers.length} player(s) connected — ${lockedCount}/${connectedPeers.length} locked in (tap on phone to lock)`
+            }
             ctx.fillText(statusText, cx, canvas.height - 30)
         }
 
