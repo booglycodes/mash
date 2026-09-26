@@ -182,14 +182,17 @@ function orange_drop(player, position, velocity, dmg, time_alive, elasticity) {
 }
 
 function build_wall(player) {
-    let wall_posn = new Vector2(0, 50)
+    let wall_size = new Vector2(200, 400)
+    let player_half_h = player.physical_properties.dimensions.y / 2
+    // Wall bottom sits at Trump's feet, so it stands on whatever he was standing on
+    let wall_posn = new Vector2(0, player_half_h - wall_size.y / 2)
     let rect = new RectComponent(
         new Vector2(0, 0),
         'orange'
     )
     let timed_delete = new TimedDelete(450)
 
-    let wall_physics = new PhysicalProperties(new Vector2(0, 0), 1000000, 0.1, new Vector2(200, 400), 0, false)
+    let wall_physics = new PhysicalProperties(new Vector2(0, 0), 1000000, 0.1, wall_size, 0, false)
     let wall = new GameObject(
         player.position.add(wall_posn),
         wall_physics,
@@ -202,6 +205,10 @@ function build_wall(player) {
     )
     player.components.approval.approval += 0.1
     all_objects.push(wall)
+
+    // Trump rides the wall up: feet on the wall's top edge
+    player.position = new Vector2(player.position.x, wall.position.y - wall_size.y / 2 - player_half_h)
+    player.physical_properties.velocity.y = 0
 }
 
 function red_state(player) {
