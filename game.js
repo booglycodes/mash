@@ -63,10 +63,6 @@ let maps = {
         trunk(320, 430, 880, '#3a2614'),
         trunk(360, 1000, 780, '#4a3018'),
         trunk(320, 1570, 900, '#3a2614'),
-        // Floating branches. Placed so every spawn x (500, 750, 1000, 1500) lands on something.
-        platform_semisolid(320, 25, new Vector2(650, 560), '#5a4028'),
-        platform_semisolid(320, 25, new Vector2(1350, 560), '#5a4028'),
-        platform_semisolid(250, 25, new Vector2(1000, 400), '#5a4028'),
         // Invisible spawner object
         new GameObject(
             new Vector2(0, 0),

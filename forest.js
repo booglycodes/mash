@@ -20,12 +20,12 @@ function play_wood_crack() {
     snd.play()
 }
 
-const BRANCH_WIDTH = 210
-const BRANCH_HEIGHT = 75
-// Knockback is roughly 2x the original (20, -35). Horizontal dominates so players get flung off
-// the side instead of disappearing above the screen for seconds. No damage — the launch is the punishment.
-const BRANCH_KNOCKBACK_X = 60
-const BRANCH_KNOCKBACK_Y = -55
+// Image is 210x75; drawn scaled to these dimensions
+const BRANCH_WIDTH = 300
+const BRANCH_HEIGHT = 107
+// No damage — the launch is the punishment.
+const BRANCH_KNOCKBACK_X = 40
+const BRANCH_KNOCKBACK_Y = -45
 
 // Branch hazard — falls from above, knocks players up and away
 function spawn_branch() {
