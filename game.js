@@ -43,7 +43,7 @@ let gameRunning = false
 let gameLoopId = null
 
 let map = null
-let map_names = ['default', 'weedopolis', 'forest']
+let map_names = ['default', 'weedopolis', 'nike']
 let maps = {
     default : new GameMap([
         platform(1400, 1000, new Vector2(arena_width / 2, arena_height + 350)),
@@ -57,7 +57,7 @@ let maps = {
         platform_semisolid(300, 25, new Vector2(arena_width / 8, arena_height - 250), 'purple'),
         platform_semisolid(300, 25, new Vector2(arena_width - arena_width / 8, arena_height - 250), 'purple')
     ], weed_bg),
-    forest : new GameMap([
+    nike : new GameMap([
         platform(1400, 1000, new Vector2(arena_width / 2, arena_height + 350), '#2d1a0e'),
         platform_semisolid(350, 25, new Vector2(arena_width / 3, arena_height - 250), '#4a3520'),
         platform_semisolid(350, 25, new Vector2(arena_width - arena_width / 3, arena_height - 250), '#4a3520'),
