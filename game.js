@@ -104,8 +104,11 @@ function initGame() {
     // Load map
     if (params['map'] === undefined) {
         map = maps[map_names[Math.floor(Math.random() * map_names.length)]]
-    } else {
+    } else if (maps[params['map']] !== undefined) {
         map = maps[params['map']]
+    } else {
+        console.error(`Unknown map '${params['map']}'. Valid maps: ${map_names.join(', ')}. Falling back to random.`)
+        map = maps[map_names[Math.floor(Math.random() * map_names.length)]]
     }
 
     for (let i = 0; i < map.objects_to_spawn.length; i++) {
