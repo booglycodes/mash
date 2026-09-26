@@ -68,9 +68,9 @@ let maps = {
             new Vector2(0, 0),
             new PhysicalProperties(new Vector2(0, 0), Infinity, 0, new Vector2(0, 0), 0, true),
             [],
-            { spawner: new ForestHazardSpawner(120) }
+            { spawner: new NikeHazardSpawner(120) }
         )
-    ], forest_bg, 'red')
+    ], nike_bg, 'red')
 }
 
 function platform(width, height, position, color) {

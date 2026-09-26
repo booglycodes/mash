@@ -1,4 +1,4 @@
-// Forest stage — falling branches (knockback) and floating leaves (heal)
+// Nike stage — falling branches (knockback) and floating leaves (heal)
 
 let branch_img = new Image()
 branch_img.src = 'images/branch.png'
@@ -6,8 +6,8 @@ branch_img.src = 'images/branch.png'
 let leaf_img = new Image()
 leaf_img.src = 'images/leaf.png'
 
-let forest_bg = new Image()
-forest_bg.src = 'images/nike.webp'
+let nike_bg = new Image()
+nike_bg.src = 'images/nike.webp'
 
 let bark_img = new Image()
 bark_img.src = 'images/bark.png'
@@ -136,9 +136,9 @@ function spawn_branch() {
         [
             new Effect(
                 [
-                    // Knock player up and away — full horizontal force toward whichever side of the branch they're on
+                    // Knock player up and away from the center of the stage (so it always pushes toward the edge)
                     (attack, obj) => {
-                        let dir_x = obj.position.x > attack.gameobject.position.x ? 1 : -1
+                        let dir_x = obj.position.x >= arena_width / 2 ? 1 : -1
                         obj.physical_properties.add_force(
                             new Vector2(dir_x * BRANCH_KNOCKBACK_X, BRANCH_KNOCKBACK_Y).scale(obj.physical_properties.mass)
                         )
@@ -289,7 +289,7 @@ class HealOnTouch {
 const BRANCH_CRACK_LEAD_FRAMES = 45          // 1.5s of cracking before the branch drops
 const BRANCH_GAP_MIN_FRAMES = 30             // 1s
 const BRANCH_GAP_MAX_FRAMES = 300            // 10s
-class ForestHazardSpawner {
+class NikeHazardSpawner {
     constructor(leaf_interval) {
         this.leaf_interval = leaf_interval
         this.leaf_timer = leaf_interval / 2
