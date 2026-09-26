@@ -110,15 +110,12 @@ function trunk(width, center_x, top_y, seed) {
     )
 }
 
-// Wood cracking sounds (CC0, see sounds/CREDITS.md). Picked at random per branch.
-const branch_crack_sounds = [
-    new Audio('sounds/branch_crack_1.mp3'),
-    new Audio('sounds/branch_crack_2.mp3'),
-]
+// Wood cracking sound (CC0: "Cracking wood" by JappeHallunken, freesound.org/s/501302).
+// A fresh Audio per play so two cracks close together can overlap instead of cutting each other off.
+const branch_crack_src = 'sounds/branch_crack_1.mp3'
+const branch_crack_preload = new Audio(branch_crack_src)
 function play_wood_crack() {
-    let snd = branch_crack_sounds[Math.floor(Math.random() * branch_crack_sounds.length)]
-    snd.currentTime = 0
-    snd.play()
+    new Audio(branch_crack_src).play()
 }
 
 // Image is 210x75; drawn scaled to these dimensions
@@ -289,30 +286,40 @@ class HealOnTouch {
 }
 
 // Spawner component — attached to an invisible map object
-const BRANCH_CRACK_LEAD_FRAMES = 18   // ~0.6s: crack sound plays, then the branch falls
+const BRANCH_CRACK_LEAD_FRAMES = 45          // 1.5s of cracking before the branch drops
+const BRANCH_GAP_MIN_FRAMES = 30             // 1s
+const BRANCH_GAP_MAX_FRAMES = 300            // 10s
 class ForestHazardSpawner {
-    constructor(branch_interval, leaf_interval) {
-        this.branch_interval = branch_interval
+    constructor(leaf_interval) {
         this.leaf_interval = leaf_interval
-        this.branch_timer = 0               // first branch comes after a full interval, not on frame 1
-        this.leaf_timer = leaf_interval / 2  // offset so they don't all come at once
-        this.branch_pending = -1            // frames until the cracked branch actually drops; -1 = none pending
+        this.leaf_timer = leaf_interval / 2
+        this.branch_timer = 0
+        this.branch_interval = this.next_branch_gap()
+        this.pending_branches = []            // countdowns for branches that have cracked but not yet dropped
+    }
+
+    next_branch_gap() {
+        return Math.floor(rand_between(BRANCH_GAP_MIN_FRAMES, BRANCH_GAP_MAX_FRAMES))
     }
 
     update() {
         this.branch_timer++
         this.leaf_timer++
 
-        if (this.branch_pending >= 0) {
-            this.branch_pending--
-            if (this.branch_pending < 0) {
+        // Gaps are measured crack-to-crack, so a new crack can start while an earlier branch is still pending
+        if (this.branch_timer >= this.branch_interval) {
+            this.branch_timer = 0
+            this.branch_interval = this.next_branch_gap()
+            play_wood_crack()
+            this.pending_branches.push(BRANCH_CRACK_LEAD_FRAMES)
+        }
+
+        for (let i = this.pending_branches.length - 1; i >= 0; i--) {
+            this.pending_branches[i]--
+            if (this.pending_branches[i] <= 0) {
+                this.pending_branches.splice(i, 1)
                 spawn_branch()
             }
-        } else if (this.branch_timer >= this.branch_interval) {
-            this.branch_timer = 0
-            this.branch_interval = Math.floor(rand_between(180, 400))
-            play_wood_crack()
-            this.branch_pending = BRANCH_CRACK_LEAD_FRAMES
         }
 
         if (this.leaf_timer >= this.leaf_interval) {
