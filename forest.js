@@ -9,54 +9,28 @@ leaf_img.src = 'images/leaf.png'
 let forest_bg = new Image()
 forest_bg.src = 'images/nike.webp'
 
-// Programmatic wood crack sound. One shared AudioContext — browsers cap how many can exist.
-let forest_audio_ctx = null
+// Wood cracking sounds (CC0, see sounds/CREDITS.md). Picked at random per branch.
+const branch_crack_sounds = [
+    new Audio('sounds/branch_crack_1.mp3'),
+    new Audio('sounds/branch_crack_2.mp3'),
+]
 function play_wood_crack() {
-    if (forest_audio_ctx === null) {
-        forest_audio_ctx = new (window.AudioContext || window.webkitAudioContext)()
-    }
-    let audioCtx = forest_audio_ctx
-    if (audioCtx.state === 'suspended') { audioCtx.resume() }
-
-    // Layer 1: sharp noise burst (the crack)
-    let duration = 0.15
-    let buffer = audioCtx.createBuffer(1, Math.floor(audioCtx.sampleRate * duration), audioCtx.sampleRate)
-    let data = buffer.getChannelData(0)
-    for (let i = 0; i < data.length; i++) {
-        let t = i / data.length
-        let envelope = Math.exp(-t * 30) * (1 - t)
-        data[i] = (Math.random() * 2 - 1) * envelope
-    }
-    let source = audioCtx.createBufferSource()
-    source.buffer = buffer
-    let filter = audioCtx.createBiquadFilter()
-    filter.type = 'bandpass'
-    filter.frequency.value = 800
-    filter.Q.value = 1.5
-    source.connect(filter)
-    filter.connect(audioCtx.destination)
-    source.start()
-
-    // Layer 2: low thump underneath so it sounds like a heavy branch, not a twig
-    let osc = audioCtx.createOscillator()
-    let gain = audioCtx.createGain()
-    osc.type = 'sine'
-    osc.frequency.setValueAtTime(160, audioCtx.currentTime)
-    osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.12)
-    gain.gain.setValueAtTime(0.5, audioCtx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15)
-    osc.connect(gain)
-    gain.connect(audioCtx.destination)
-    osc.start()
-    osc.stop(audioCtx.currentTime + 0.15)
+    let snd = branch_crack_sounds[Math.floor(Math.random() * branch_crack_sounds.length)]
+    snd.currentTime = 0
+    snd.play()
 }
+
+const BRANCH_WIDTH = 210
+const BRANCH_HEIGHT = 75
+// Knockback is roughly 2x the original (20, -35). Horizontal dominates so players get flung off
+// the side instead of disappearing above the screen for seconds. No damage — the launch is the punishment.
+const BRANCH_KNOCKBACK_X = 60
+const BRANCH_KNOCKBACK_Y = -55
 
 // Branch hazard — falls from above, knocks players up and away
 function spawn_branch() {
-    let x = rand_between(100, arena_width - 100)
-    let start_y = -60
-
-    play_wood_crack()
+    let x = rand_between(150, arena_width - 150)
+    let start_y = -BRANCH_HEIGHT
 
     let branch_attack = new Attack(
         null, // no owner player
@@ -64,18 +38,12 @@ function spawn_branch() {
         [
             new Effect(
                 [
-                    // Knock player up and away from branch center
+                    // Knock player up and away — full horizontal force toward whichever side of the branch they're on
                     (attack, obj) => {
                         let dir_x = obj.position.x > attack.gameobject.position.x ? 1 : -1
-                        obj.physical_properties.add_force(new Vector2(dir_x * 20, -35).scale(obj.physical_properties.mass))
-                    },
-                    // Small damage
-                    (_, obj) => {
-                        if (obj.components.stats !== undefined) {
-                            obj.components.stats.apply_damage(-5)
-                        } else if (obj.components.health !== undefined) {
-                            obj.components.health.apply_damage(-5)
-                        }
+                        obj.physical_properties.add_force(
+                            new Vector2(dir_x * BRANCH_KNOCKBACK_X, BRANCH_KNOCKBACK_Y).scale(obj.physical_properties.mass)
+                        )
                     }
                 ],
                 and_filters([
@@ -96,10 +64,10 @@ function spawn_branch() {
     let image = new ImageComponent(branch_img, new Vector2(0, 0), false)
 
     let physics = new PhysicalProperties(
-        new Vector2(rand_between(-2, 2), rand_between(5, 10)),
-        80,
-        0.5,
-        new Vector2(140, 50),
+        new Vector2(rand_between(-2, 2), rand_between(8, 14)),
+        150,
+        0.6,
+        new Vector2(BRANCH_WIDTH, BRANCH_HEIGHT),
         0.3,
         false
     )
@@ -220,23 +188,30 @@ class HealOnTouch {
 }
 
 // Spawner component — attached to an invisible map object
+const BRANCH_CRACK_LEAD_FRAMES = 18   // ~0.6s: crack sound plays, then the branch falls
 class ForestHazardSpawner {
     constructor(branch_interval, leaf_interval) {
         this.branch_interval = branch_interval
         this.leaf_interval = leaf_interval
         this.branch_timer = 0               // first branch comes after a full interval, not on frame 1
         this.leaf_timer = leaf_interval / 2  // offset so they don't all come at once
+        this.branch_pending = -1            // frames until the cracked branch actually drops; -1 = none pending
     }
 
     update() {
         this.branch_timer++
         this.leaf_timer++
 
-        if (this.branch_timer >= this.branch_interval) {
+        if (this.branch_pending >= 0) {
+            this.branch_pending--
+            if (this.branch_pending < 0) {
+                spawn_branch()
+            }
+        } else if (this.branch_timer >= this.branch_interval) {
             this.branch_timer = 0
-            // Randomize a bit so it's not perfectly periodic
             this.branch_interval = Math.floor(rand_between(180, 400))
-            spawn_branch()
+            play_wood_crack()
+            this.branch_pending = BRANCH_CRACK_LEAD_FRAMES
         }
 
         if (this.leaf_timer >= this.leaf_interval) {

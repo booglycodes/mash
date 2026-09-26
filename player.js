@@ -398,7 +398,8 @@ class HealthComponent {
     draw() {
         if (this.display) {
             ctx.textAlign = 'left'
-            ctx.fillStyle = 'green'
+            // `map` is the active GameMap from game.js; null in the lobby
+            ctx.fillStyle = (typeof map !== 'undefined' && map) ? map.health_color : 'green'
             ctx.font = '30px serif'
             let x = this.gameobject.position.x - this.gameobject.physical_properties.dimensions.x / 2
             let y = this.gameobject.position.y - this.gameobject.physical_properties.dimensions.y

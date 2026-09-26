@@ -58,10 +58,15 @@ let maps = {
         platform_semisolid(300, 25, new Vector2(arena_width - arena_width / 8, arena_height - 250), 'purple')
     ], weed_bg),
     nike : new GameMap([
-        platform(1400, 1000, new Vector2(arena_width / 2, arena_height + 350), '#2d1a0e'),
-        platform_semisolid(350, 25, new Vector2(arena_width / 3, arena_height - 250), '#4a3520'),
-        platform_semisolid(350, 25, new Vector2(arena_width - arena_width / 3, arena_height - 250), '#4a3520'),
-        platform_semisolid(250, 25, new Vector2(arena_width / 2, arena_height - 450), '#4a3520'),
+        // Three tree trunks of different heights with gaps you can fall through.
+        // Trunks extend below the death floor so they read as continuous.
+        trunk(320, 430, 880, '#3a2614'),
+        trunk(360, 1000, 780, '#4a3018'),
+        trunk(320, 1570, 900, '#3a2614'),
+        // Floating branches. Placed so every spawn x (500, 750, 1000, 1500) lands on something.
+        platform_semisolid(320, 25, new Vector2(650, 560), '#5a4028'),
+        platform_semisolid(320, 25, new Vector2(1350, 560), '#5a4028'),
+        platform_semisolid(250, 25, new Vector2(1000, 400), '#5a4028'),
         // Invisible spawner object
         new GameObject(
             new Vector2(0, 0),
@@ -69,7 +74,13 @@ let maps = {
             [],
             { spawner: new ForestHazardSpawner(250, 120) }
         )
-    ], forest_bg)
+    ], forest_bg, 'red')
+}
+
+// A tall solid column whose top edge sits at `top_y`, reaching down past the death floor.
+function trunk(width, center_x, top_y, color) {
+    let height = 1400
+    return platform(width, height, new Vector2(center_x, top_y + height / 2), color)
 }
 
 function platform(width, height, position, color) {
