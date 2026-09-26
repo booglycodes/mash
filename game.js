@@ -43,7 +43,7 @@ let gameRunning = false
 let gameLoopId = null
 
 let map = null
-let map_names = ['default', 'weedopolis']
+let map_names = ['default', 'weedopolis', 'forest']
 let maps = {
     default : new GameMap([
         platform(1400, 1000, new Vector2(arena_width / 2, arena_height + 350)),
@@ -56,7 +56,20 @@ let maps = {
         platform_semisolid(300, 25, new Vector2(arena_width - arena_width / 4, arena_height - 300), 'purple'),
         platform_semisolid(300, 25, new Vector2(arena_width / 8, arena_height - 250), 'purple'),
         platform_semisolid(300, 25, new Vector2(arena_width - arena_width / 8, arena_height - 250), 'purple')
-    ], weed_bg)
+    ], weed_bg),
+    forest : new GameMap([
+        platform(1400, 1000, new Vector2(arena_width / 2, arena_height + 350), '#2d1a0e'),
+        platform_semisolid(350, 25, new Vector2(arena_width / 3, arena_height - 250), '#4a3520'),
+        platform_semisolid(350, 25, new Vector2(arena_width - arena_width / 3, arena_height - 250), '#4a3520'),
+        platform_semisolid(250, 25, new Vector2(arena_width / 2, arena_height - 450), '#4a3520'),
+        // Invisible spawner object
+        new GameObject(
+            new Vector2(0, 0),
+            new PhysicalProperties(new Vector2(0, 0), Infinity, 0, new Vector2(0, 0), 0, true),
+            [],
+            { spawner: new ForestHazardSpawner(250, 120) }
+        )
+    ], forest_bg)
 }
 
 function platform(width, height, position, color) {
